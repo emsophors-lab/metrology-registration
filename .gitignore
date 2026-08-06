@@ -1,0 +1,5 @@
+node_modules/
+package-lock.json
+package.json
+read_reports.js
+report_summary.txt
