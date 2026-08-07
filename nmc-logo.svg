@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <path id="textArcTop" d="M 42 150 A 108 108 0 0 1 258 150" />
+    <path id="textArcBottom" d="M 258 150 A 108 108 0 0 1 42 150" />
+  </defs>
+
+  <!-- Outer Ring -->
+  <circle cx="150" cy="150" r="144" fill="#ffffff" stroke="#1e3a8a" stroke-width="6"/>
+  <circle cx="150" cy="150" r="128" fill="none" stroke="#1e3a8a" stroke-width="2"/>
+
+  <!-- Top Text (Khmer) -->
+  <text font-family="'Siemreap', 'Kantumruy Pro', sans-serif" font-size="16" font-weight="bold" fill="#1e3a8a" text-anchor="middle">
+    <textPath href="#textArcTop" startOffset="50%">មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ</textPath>
+  </text>
+
+  <!-- Bottom Text (English) -->
+  <text font-family="'Times New Roman', serif" font-size="13.5" font-weight="bold" fill="#1e3a8a" text-anchor="middle" letter-spacing="1.2">
+    <textPath href="#textArcBottom" startOffset="50%">NATIONAL METROLOGY CENTER</textPath>
+  </text>
+
+  <!-- Left Gold Scale Icon -->
+  <g transform="translate(18, 138) scale(0.65)">
+    <path d="M12 2v5m0 0l-7 7m7-7l7 7M5 14h14M5 14l-3 7h6l-3-7zm14 0l-3 7h6l-3-7z" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Right Gold Scale Icon -->
+  <g transform="translate(254, 138) scale(0.65)">
+    <path d="M12 2v5m0 0l-7 7m7-7l7 7M5 14h14M5 14l-3 7h6l-3-7zm14 0l-3 7h6l-3-7z" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Inner Circle with Red/Blue Wave Background -->
+  <g clip-path="url(#innerCircleClip)">
+    <clipPath id="innerCircleClip">
+      <circle cx="150" cy="150" r="95"/>
+    </clipPath>
+    <rect x="50" y="50" width="200" height="200" fill="#1e3a8a"/>
+    <!-- Red Curve -->
+    <path d="M 55 150 C 100 70, 200 230, 245 150 L 245 55 L 55 55 Z" fill="#da291c"/>
+  </g>
+  <circle cx="150" cy="150" r="95" fill="none" stroke="#1e3a8a" stroke-width="3"/>
+
+  <!-- Center White Metrology Weight Icon -->
+  <path d="M 134 94 C 134 87, 166 87, 166 94 L 168 104 C 177 104, 185 112, 185 122 L 187 202 C 187 209, 178 213, 150 213 C 122 213, 113 209, 113 202 L 115 122 C 115 112, 123 104, 132 104 Z" 
+        fill="#ffffff" stroke="#1e3a8a" stroke-width="3.5" stroke-linejoin="round"/>
+
+  <!-- Cambodia Map Shape Inside Weight -->
+  <path d="M 132 135 C 138 128, 153 127, 166 132 C 174 139, 176 152, 171 164 C 166 174, 168 184, 157 192 C 146 197, 134 191, 129 180 C 125 168, 127 150, 132 135 Z" 
+        fill="none" stroke="#059669" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Tonle Sap Lake -->
+  <path d="M 141 154 Q 147 146 154 150" fill="none" stroke="#0284c7" stroke-width="2" stroke-linecap="round"/>
+</svg>
