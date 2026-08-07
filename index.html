@@ -12,335 +12,562 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <!-- SheetJS for parsing Excel XLSX/XLS files -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-    <!-- Export libraries for PDF/Word download -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Export libraries for Word/Excel download -->
+    <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <!-- Google Fonts for Khmer -->
     <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&family=Siemreap&display=swap" rel="stylesheet">
     
     <style>
         * {
             box-sizing: border-box;
+            scroll-behavior: smooth;
         }
         body {
             font-family: 'Siemreap', sans-serif;
-            background-color: #f3f4f6;
-            color: #1f2937;
         }
         .font-moul {
             font-family: 'Moul', serif;
         }
-        .report-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 40px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        /* Custom Scrollbar for dashboard tables */
+        .table-container::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-        .export-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            border-radius: 10px;
-            padding: 10px 16px;
-            font-weight: 700;
-            color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
-            transition: transform .15s ease, opacity .15s ease;
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
         }
-        .export-btn:hover { transform: translateY(-1px); opacity: .94; }
-        .export-btn:disabled { opacity: .65; cursor: not-allowed; transform: none; }
-        .btn-pdf { background: #b91c1c; }
-        .btn-word { background: #1d4ed8; }
-        .exporting body, body.exporting {
-            background: white !important;
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
         }
-        body.exporting .report-container {
-            width: 297mm !important;
-            max-width: 297mm !important;
-            margin: 0 auto !important;
-            padding: 10mm !important;
-            box-shadow: none !important;
-            border-radius: 0 !important;
-            overflow: visible !important;
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
-        body.exporting .table-container {
-            max-height: none !important;
-            overflow: visible !important;
-        }
-        body.exporting table {
-            width: 100% !important;
-            white-space: normal !important;
-            table-layout: auto !important;
-            page-break-inside: auto;
-        }
-        body.exporting table th,
-        body.exporting table td {
-            font-size: 9px !important;
-            line-height: 1.45 !important;
-            padding: 4px 5px !important;
-            word-break: break-word;
-        }
-        body.exporting table th {
-            position: static !important;
-        }
-        body.exporting .shadow-sm,
-        body.exporting .shadow-inner {
-            box-shadow: none !important;
-        }
-        body.exporting canvas {
-            max-width: 100% !important;
-        }
-        .no-page-break {
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
+        /* Sticky headers in dashboard tables */
         table th {
-            background-color: #1e3a8a; /* Deep blue for header */
-            color: white;
             position: sticky;
             top: 0;
+            z-index: 1;
         }
-        @page {
-            size: A4 landscape;
-            margin: 10mm;
-        }
-        @media print {
-            html, body {
-                width: 297mm;
-                min-height: 210mm;
-                background-color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            .report-container {
-                width: 100% !important;
-                max-width: none !important;
-                box-shadow: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                border-radius: 0 !important;
-            }
-            .no-print { display: none !important; }
-            .print-break { page-break-before: always; }
-            .table-container { max-height: none !important; overflow: visible !important; }
-            table { white-space: normal !important; width: 100% !important; }
-            table th { position: static !important; }
-            table th, table td { font-size: 9px !important; padding: 4px 5px !important; word-break: break-word; }
-            canvas { max-width: 100% !important; }
-        }
-        /* Custom Scrollbar for table */
-        .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
-        .table-container::-webkit-scrollbar-track { background: #f1f1f1; }
-        .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .table-container::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="py-8">
-
-    <!-- Upload and Export Section (Hidden in print/export) -->
-    <div class="max-w-7xl mx-auto mb-6 px-4 no-print text-center">
-        <label class="block mb-2 text-sm font-medium text-gray-900 font-bold">សូមបញ្ចូល File ទិន្នន័យ (CSV/XLSX) របស់លោកអ្នកដើម្បី Update របាយការណ៍នេះ</label>
-        <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none max-w-md mx-auto p-2">
-        <div class="mt-4 flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <button type="button" id="downloadPdfBtn" class="export-btn btn-pdf">⬇ ទាញយក PDF</button>
-            <button type="button" id="downloadWordBtn" class="export-btn btn-word">⬇ ទាញយក Word</button>
-        </div>
-        <p class="mt-2 text-xs text-gray-600">PDF/Word នឹងយករបាយការណ៍ដែលកំពុងបង្ហាញនៅលើ Dashboard និងរៀបចំជា A4 Landscape ដោយស្វ័យប្រវត្តិ។</p>
-        <p class="mt-1 text-xs text-gray-500">Excel ត្រូវមាន columns ដូចជា៖ ល.រ ក្រុមហ៊ុន/សហគ្រាស, ល.រ មុខសញ្ញា, ឈ្មោះក្រុមហ៊ុន/សហគ្រាស, រាជធានី/ខេត្ត។</p>
-        <p id="uploadStatus" class="mt-2 text-xs text-blue-700 font-bold">សូម Upload Excel/CSV ដើម្បីបង្កើតរបាយការណ៍។ Template នេះមិនផ្ទុកទិន្នន័យចាស់ទេ។</p>
-    </div>
-
-    <div class="report-container rounded-lg">
-        <!-- Header Section -->
-        <div class="flex justify-between items-start mb-10">
-            <!-- Left: Ministry Info -->
-            <div class="text-center w-1/3">
-                <h2 class="font-moul text-sm text-blue-900 leading-relaxed">
-                    ក្រសួងឧស្សាហកម្ម វិទ្យាសាស្ត្រ បច្ចេកវិទ្យា និងនវានុវត្តន៍
-                </h2>
-                <h3 class="font-moul text-md mt-2">មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ</h3>
-                <h4 class="font-moul text-sm mt-1 text-blue-900">នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</h4>
-                <div class="w-16 h-[1px] bg-black mx-auto mt-2"></div>
-                <p class="mt-2 text-sm">លេខ៖ ..................... មមជ</p>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased overflow-hidden">
+    <!-- Main Flex Shell -->
+    <div class="flex h-screen w-screen overflow-hidden">
+        
+        <!-- Left Sidebar (Desktop: visible, Tablet/Mobile: drawer) -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-20 flex w-64 flex-col bg-slate-900 text-slate-400 border-r border-slate-800 transition-transform duration-300 -translate-x-full md:translate-x-0 md:static md:z-auto">
+            <!-- Sidebar Brand Header -->
+            <div class="flex h-16 items-center gap-3 border-b border-slate-800 px-4 bg-slate-950 flex-shrink-0">
+                <!-- National Emblem Badge / Icon -->
+                <div class="h-9 w-9 rounded-lg bg-blue-600/10 flex items-center justify-center border border-blue-500/20 text-blue-500 flex-shrink-0">
+                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 22h20L12 2zm0 3.8L19.2 20H4.8L12 5.8z"/>
+                    </svg>
+                </div>
+                <div class="overflow-hidden">
+                    <h1 class="font-moul text-[10px] text-white truncate leading-tight">មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ</h1>
+                    <p class="text-[9px] text-slate-500 truncate leading-tight mt-0.5">នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</p>
+                </div>
             </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+                <a href="#" class="flex items-center gap-3 rounded-lg bg-blue-600/10 border border-blue-500/20 px-3 py-2.5 text-xs font-bold text-white transition-all">
+                    <!-- Home/Dashboard Icon -->
+                    <svg class="h-4.5 w-4.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#tableSection" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <!-- Document Icon -->
+                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>ការចុះបញ្ជីមាត្រាសាស្ត្រ</span>
+                </a>
+                <a href="#recentCompaniesCard" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <!-- Office Icon -->
+                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    <span>ក្រុមហ៊ុន/សហគ្រាស</span>
+                </a>
+                <a href="#toolsTableCard" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <!-- Gauge Icon -->
+                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <span>ឧបករណ៍មាត្រាសាស្ត្រ</span>
+                </a>
+                <a href="#packagesTableCard" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <!-- Box/Pack Icon -->
+                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-18v10l-8-4m0 0v10l8 4"/></svg>
+                    <span>ទំនិញវេចខ្ចប់</span>
+                </a>
+                <a href="#delayTableCard" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <!-- Delay Icon -->
+                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <span>ឯកសារយឺត</span>
+                </a>
+                <a href="#downloadWordBtn" onclick="document.getElementById('downloadWordBtn').click(); return false;" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <!-- Report Icon -->
+                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>ទាញយក Word</span>
+                </a>
+                <a href="#downloadExcelBtn" onclick="document.getElementById('downloadExcelBtn').click(); return false;" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <!-- Sheet Icon -->
+                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>ទាញយក Excel</span>
+                </a>
+                <a href="#" onclick="alert('មុខងារនេះនឹងត្រូវបានអភិវឌ្ឍបន្ថែមក្នុងពេលឆាប់ៗខាងមុខ។'); return false;" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <!-- Settings Icon -->
+                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Sidebar Contacts Footer -->
+            <div class="border-t border-slate-800 p-4 space-y-2 text-[10px] text-slate-500 font-medium flex-shrink-0 bg-slate-950">
+                <p class="font-bold text-slate-400 uppercase tracking-wider text-[9px]">ទំនាក់ទំនងគាំទ្រ</p>
+                <div class="space-y-1 text-slate-500">
+                    <p class="flex items-center gap-1.5">
+                        <span>📞</span>
+                        <a href="tel:023426110" class="hover:text-blue-400">023 426 110</a>
+                    </p>
+                    <p class="flex items-center gap-1.5">
+                        <span>✉</span>
+                        <a href="mailto:info@dim.gov.kh" class="hover:text-blue-400">info@dim.gov.kh</a>
+                    </p>
+                </div>
+                <div class="pt-2 border-t border-slate-800 flex justify-between text-[9px] text-slate-600">
+                    <span>ប្រព័ន្ធវិភាគ</span>
+                    <span>v1.0.0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Sidebar Backdrop (for Mobile) -->
+        <div id="sidebarBackdrop" class="fixed inset-0 z-10 bg-slate-900/40 backdrop-blur-sm hidden md:hidden"></div>
+
+        <!-- Right Hand Workspace Pane -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
             
-            <!-- Right: Nation Religion King -->
-            <div class="text-center w-1/3">
-                <h1 class="font-moul text-lg text-blue-900">ព្រះរាជាណាចក្រកម្ពុជា</h1>
-                <h2 class="font-moul text-md mt-1">ជាតិ សាសនា ព្រះមហាក្សត្រ</h2>
-                <div class="flex justify-center mt-1">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Line_Pattern.svg" alt="Line" class="w-32 h-3" onerror="this.style.display='none'">
+            <!-- Main Header Bar -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 flex-shrink-0 z-10">
+                <!-- Left Organization Title -->
+                <div class="flex items-center gap-3">
+                    <button id="menuBtn" class="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg md:hidden transition">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <div class="hidden sm:block">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">ក្រសួងឧស្សាហកម្ម វិទ្យាសាស្ត្រ បច្ចេកវិទ្យា និងនវានុវត្តន៍</p>
+                        <h2 class="text-xs font-bold text-slate-800 mt-1 leading-none">មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ &bull; នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</h2>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Title & Addressing -->
-        <div class="text-center mb-8">
-            <h2 class="text-xl font-moul mb-6 underline underline-offset-8 text-blue-900">របាយការណ៍បូកសរុបលទ្ធផលការងារចុះបញ្ជីមាត្រាសាស្ត្រ</h2>
-            <p class="text-lg font-bold">
-                <span class="font-moul">គោរពជូន</span><br>
-                <span class="font-moul text-xl text-blue-800 mt-2 block">ឯកឧត្តមប្រធាន មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ</span>
-            </p>
-            <p class="mt-4 text-left indent-10 leading-loose">
-                តបតាមកម្មវត្ថុខាងលើ <b>នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</b> មានកិត្តិយសសូមគោរពជម្រាបជូន <b>ឯកឧត្តមប្រធាន</b> មេត្តាជ្រាបថា យោងតាមទិន្នន័យនៃការស្នើសុំចុះបញ្ជីឧបករណ៍មាត្រាសាស្ត្រ និងទំនិញវេចខ្ចប់ ក្រុមការងារបានធ្វើការបូកសរុប និងវិភាគទិន្នន័យ ដែលមានលទ្ធផលលម្អិតដូចខាងក្រោម៖
-            </p>
-        </div>
+                <!-- Right profile & tools metadata -->
+                <div class="flex items-center gap-4">
+                    <!-- Notifications Trigger -->
+                    <button class="relative p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+                    </button>
 
-        <!-- Summary KPIs -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8 no-page-break">
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center shadow-sm">
-                <h3 class="text-sm text-gray-600 font-bold mb-1">ចំនួនឧបករណ៍សរុបដែលបានចុះបញ្ជី</h3>
-                <p class="text-3xl font-bold text-blue-800" id="kpi-total">0</p>
-            </div>
-            <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center shadow-sm">
-                <h3 class="text-sm text-gray-600 font-bold mb-1">ឧបករណ៍មាត្រាសាស្ត្រ</h3>
-                <p class="text-3xl font-bold text-green-700" id="kpi-tools">0</p>
-            </div>
-            <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center shadow-sm">
-                <h3 class="text-sm text-gray-600 font-bold mb-1">ទំនិញវេចខ្ចប់</h3>
-                <p class="text-3xl font-bold text-purple-700" id="kpi-packages">0</p>
-            </div>
-            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center shadow-sm">
-                <h3 class="text-sm text-gray-600 font-bold mb-1">កំពុងរង់ចាំការអនុម័ត</h3>
-                <p class="text-[10px] text-gray-500 mb-1">រាប់តាមឯកសារ/ក្រុមហ៊ុន ១</p>
-                <p class="text-3xl font-bold text-orange-600" id="kpi-pending">0</p>
-            </div>
-            <div class="bg-cyan-50 border border-cyan-200 rounded-lg p-4 text-center shadow-sm">
-                <h3 class="text-sm text-gray-600 font-bold mb-1">ចំនួនសរុបក្រុមហ៊ុន/សហគ្រាសដែលបានដាក់ស្នើចុះបញ្ជី</h3>
-                <p class="text-[10px] text-gray-500 mb-1">រាប់តាម «ល.រ មុខសញ្ញា = ១»</p>
-                <p class="text-3xl font-bold text-cyan-700" id="kpi-companies">0</p>
-            </div>
-            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center shadow-sm">
-                <h3 class="text-sm text-gray-600 font-bold mb-1">ចំនួនក្រុមហ៊ុន/សហគ្រាសដែលបានអនុម័តរួច</h3>
-                <p class="text-[10px] text-gray-500 mb-1">រាប់តាមឯកសារ/ក្រុមហ៊ុន ១</p>
-                <p class="text-3xl font-bold text-emerald-700" id="kpi-approved-companies">0</p>
-            </div>
-        </div>
+                    <!-- Language Switcher Selector -->
+                    <div class="flex items-center gap-1.5 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 text-xs font-bold text-slate-700">
+                        <span>🇰🇭</span>
+                        <span class="hidden sm:inline">ខ្មែរ</span>
+                    </div>
 
-        <!-- Charts Section -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 no-page-break">
-            <!-- Monthly Chart -->
-            <div class="md:col-span-2 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <h3 class="font-moul text-sm text-center mb-4 text-gray-700">ក្រាហ្វិកបង្ហាញចំនួនស្នើសុំចុះបញ្ជីប្រចាំខែ (<span id="chartPeriod">មិនទាន់មានទិន្នន័យ</span>)</h3>
-                <div class="relative h-64 w-full">
-                    <canvas id="monthlyChart"></canvas>
+                    <!-- User Profile Dropdown -->
+                    <div class="flex items-center gap-2.5 border-l border-slate-200 pl-4">
+                        <div class="h-8 w-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                            ADM
+                        </div>
+                        <div class="hidden lg:block text-left">
+                            <p class="text-xs font-bold text-slate-800 leading-tight">អ្នកគ្រប់គ្រងប្រព័ន្ធ</p>
+                            <p class="text-[9px] text-slate-400 font-bold leading-tight">មន្ត្រីជាន់ខ្ពស់វិភាគ</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- Status Chart -->
-            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <h3 class="font-moul text-sm text-center mb-4 text-gray-700">ស្ថានភាពឯកសារ</h3>
-                <div class="relative h-64 w-full flex justify-center">
-                    <canvas id="statusChart"></canvas>
+            </header>
+
+            <!-- Dashboard Content Container (Scrollable) -->
+            <main class="flex-1 overflow-y-auto p-6 space-y-6">
+                
+                <!-- Main Dashboard Header & Upload Card -->
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <!-- Left: Title Banner -->
+                    <div class="xl:col-span-2 bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h1 class="font-moul text-lg text-slate-900">Dashboard ចុះបញ្ជីមាត្រាសាស្ត្រ</h1>
+                            <p class="text-xs text-slate-500 mt-1.5 font-medium leading-relaxed">
+                                ប្រព័ន្ធតាមដាន វិភាគ និងបូកសរុបទិន្នន័យចុះបញ្ជីឧបករណ៍មាត្រាសាស្ត្រ និងទំនិញវេចខ្ចប់ថ្នាក់ជាតិ។ 
+                                សម្របសម្រួលដោយ នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម។
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 mt-6 pt-4 border-t border-slate-100">
+                            <!-- Filters (Month / Year placeholders) -->
+                            <select class="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <option>ទិន្នន័យគ្រប់ខែ</option>
+                                <option>ឧសភា</option>
+                                <option>មិថុនា</option>
+                                <option>កក្កដា</option>
+                            </select>
+                            <select class="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <option>២០២៦</option>
+                                <option>២០២៥</option>
+                            </select>
+                            <button type="button" class="bg-slate-900 text-white font-bold text-xs px-3.5 py-2 rounded-lg hover:bg-slate-800 transition">
+                                ស្វែងរក
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Drag and Drop Upload Card -->
+                    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
+                        <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" class="hidden">
+                        <div class="border-2 border-dashed border-slate-200 rounded-lg p-5 text-center bg-slate-50/50 hover:bg-slate-50 transition cursor-pointer relative" onclick="document.getElementById('csvFileInput').click()">
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-3xl">📥</span>
+                                <span class="text-xs font-bold text-slate-800">នាំចូលទិន្នន័យ Excel/CSV</span>
+                                <span class="text-[10px] text-slate-400">អូសឯកសារមកទីនេះ ឬចុចដើម្បីជ្រើសរើសឯកសារ</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 font-bold mt-4 pt-2">
+                            <span>ស្ថានភាព Upload៖</span>
+                            <span id="uploadStatus" class="text-blue-600">រង់ចាំឯកសារ...</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
+                <!-- 6 KPI Responsive Cards Row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                    <!-- KPI Card 1: Total Registered Items -->
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                        <div class="p-3 rounded-lg bg-slate-50 text-slate-500 flex-shrink-0">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">ឧបករណ៍ចុះបញ្ជីសរុប</p>
+                            <h3 class="text-xl font-bold text-slate-900 mt-0.5" id="kpi-total">0</h3>
+                            <p class="text-[9px] text-slate-400 truncate mt-0.5">ឧបករណ៍ &amp; ទំនិញ</p>
+                        </div>
+                    </div>
 
-        <!-- Company Province Graphic Section -->
-        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-8 no-page-break">
-            <h3 class="font-moul text-md text-center mb-2 text-sky-900">ក្រាហ្វិកបង្ហាញចំនួនក្រុមហ៊ុន/សហគ្រាសតាមរាជធានី/ខេត្ត</h3>
-            <p class="text-sm text-gray-600 text-center mb-4">បង្ហាញការបែងចែកចំនួនក្រុមហ៊ុន/សហគ្រាសដែលបានចុះបញ្ជី តាមរាជធានី/ខេត្ត ដោយយកពីទិន្នន័យដូចគ្នានឹងតារាងខាងក្រោម និងរៀបពីច្រើនទៅតិច</p>
-            <div class="relative h-96 w-full"><canvas id="companyProvinceChart"></canvas></div>
-            <p id="companyProvinceTopSummary" class="mt-4 text-sm text-sky-900 font-bold text-center"></p>
-        </div>
+                    <!-- KPI Card 2: Metrology Instruments -->
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                        <div class="p-3 rounded-lg bg-emerald-50 text-emerald-600 flex-shrink-0">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">ឧបករណ៍មាត្រាសាស្ត្រ</p>
+                            <h3 class="text-xl font-bold text-emerald-600 mt-0.5" id="kpi-tools">0</h3>
+                            <p class="text-[9px] text-slate-400 truncate mt-0.5">ឧបករណ៍វាស់វែង</p>
+                        </div>
+                    </div>
 
-        <!-- Province Company Registration List -->
-        <div class="mb-8 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-            <h3 class="font-moul text-md mb-4 text-blue-900">បញ្ជីរាយនាមក្រុមហ៊ុន/សហគ្រាសដែលបានចុះបញ្ជីឧបករណ៍មាត្រាសាស្ត្រ</h3>
-            <p class="text-sm text-gray-600 mb-4">តារាងសង្ខេបចំនួនក្រុមហ៊ុន/សហគ្រាសតាមរាជធានី/ខេត្ត ដោយរាប់រាល់ជួរដែល «ល.រ មុខសញ្ញា = ១» ជាក្រុមហ៊ុន/សហគ្រាសមួយ។</p>
-            <div class="table-container overflow-x-auto overflow-y-auto max-h-96 border border-gray-300 rounded-lg shadow-inner">
-                <table class="w-full text-sm text-left text-gray-600 whitespace-nowrap">
-                    <thead class="text-xs text-white uppercase bg-blue-900">
-                        <tr>
-                            <th scope="col" class="px-4 py-3 border-b text-center">ល.រ</th>
-                            <th scope="col" class="px-4 py-3 border-b">រាជធានី/ខេត្ត</th>
-                            <th scope="col" class="px-4 py-3 border-b text-center">សរុប</th>
-                            <th scope="col" class="px-4 py-3 border-b text-center">ការចុះបញ្ជីថ្មី</th>
-                            <th scope="col" class="px-4 py-3 border-b text-center">ការចុះបញ្ជីបន្ត</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
-            </div>
-        </div>
+                    <!-- KPI Card 3: Packaged Goods -->
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                        <div class="p-3 rounded-lg bg-purple-50 text-purple-600 flex-shrink-0">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-18v10l-8-4m0 0v10l8 4"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">ទំនិញវេចខ្ចប់</p>
+                            <h3 class="text-xl font-bold text-purple-600 mt-0.5" id="kpi-packages">0</h3>
+                            <p class="text-[9px] text-slate-400 truncate mt-0.5">ទំនិញបិទស្លាក</p>
+                        </div>
+                    </div>
 
-        <!-- Company/Enterprise Detail Table -->
-        <div class="mb-8 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-            <h3 class="font-moul text-md mb-2 text-cyan-800">តារាងលម្អិតក្រុមហ៊ុន/សហគ្រាស និងចំនួនមុខសញ្ញាដែលបានចុះបញ្ជី</h3>
-            <p class="text-sm text-gray-600 mb-4">តារាងនេះរាប់ក្រុមហ៊ុន/សហគ្រាសតាមគោលការណ៍ទិន្នន័យគុណភាព ដោយយកតែទិន្នន័យដែលមាន “ល.រ មុខសញ្ញា = 1” សម្រាប់រាប់សរុបក្រុមហ៊ុន/សហគ្រាស ហើយបង្ហាញចំនួនមុខសញ្ញាសរុបរបស់ក្រុមហ៊ុននីមួយៗ។</p>
-            <div class="table-container overflow-x-auto overflow-y-auto max-h-96 border border-gray-300 rounded-lg shadow-inner">
-                <table class="w-full text-sm text-left text-gray-600 whitespace-nowrap">
-                    <thead class="text-xs text-white uppercase bg-blue-900">
-                        <tr><th class="px-4 py-3 border-b">ល.រ</th><th class="px-4 py-3 border-b">ឈ្មោះក្រុមហ៊ុន/សហគ្រាស</th><th class="px-4 py-3 border-b">រាជធានី/ខេត្ត</th><th class="px-4 py-3 border-b text-center">ចំនួនមុខសញ្ញាសរុប</th><th class="px-4 py-3 border-b text-center">ឧបករណ៍មាត្រាសាស្ត្រ</th><th class="px-4 py-3 border-b text-center">ទំនិញវេចខ្ចប់</th><th class="px-4 py-3 border-b">ថ្ងៃចុះបញ្ជី</th><th class="px-4 py-3 border-b text-center">ស្ថានភាព</th></tr>
-                    </thead>
-                    <tbody id="companiesSummaryBody"></tbody>
-                </table>
-            </div>
-        </div>
+                    <!-- KPI Card 4: Pending Approvals -->
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                        <div class="p-3 rounded-lg bg-orange-50 text-orange-600 flex-shrink-0">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">កំពុងរង់ចាំអនុម័ត</p>
+                            <h3 class="text-xl font-bold text-orange-600 mt-0.5" id="kpi-pending">0</h3>
+                            <p class="text-[9px] text-slate-400 truncate mt-0.5">សំណុំឯកសារកំពុងរត់</p>
+                        </div>
+                    </div>
 
-        <!-- Province Graphic Section -->
-        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-8 no-page-break">
-            <h3 class="font-moul text-md text-center mb-2 text-blue-900">ក្រាហ្វិកបង្ហាញចំនួនឧបករណ៍ដែលបានចុះបញ្ជីតាមរាជធានី/ខេត្ត</h3>
-            <p class="text-sm text-gray-600 text-center mb-4">បង្ហាញចំនួនមុខសញ្ញាឧបករណ៍មាត្រាសាស្ត្រ និងទំនិញវេចខ្ចប់ដែលបានចុះបញ្ជីតាមរាជធានី/ខេត្ត ដោយរៀបពីច្រើនទៅតិច</p>
-            <div class="relative h-96 w-full"><canvas id="provinceChart"></canvas></div>
-            <p id="provinceTopSummary" class="mt-4 text-sm text-blue-900 font-bold text-center"></p>
-        </div>
+                    <!-- KPI Card 5: Total Companies Submitted -->
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                        <div class="p-3 rounded-lg bg-cyan-50 text-cyan-600 flex-shrink-0">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">ក្រុមហ៊ុនដាក់ស្នើសរុប</p>
+                            <h3 class="text-xl font-bold text-cyan-600 mt-0.5" id="kpi-companies">0</h3>
+                            <p class="text-[9px] text-slate-400 truncate mt-0.5">ល.រ មុខសញ្ញា = ១</p>
+                        </div>
+                    </div>
 
-        <!-- Summary Tables by Registration Type -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <h3 class="font-moul text-md mb-4 text-green-800">តារាងសរុបឧបករណ៍មាត្រាសាស្ត្រ ដែលបានចុះបញ្ជី</h3>
-                <div class="table-container overflow-x-auto overflow-y-auto max-h-80 border border-gray-300 rounded-lg">
-                    <table class="w-full text-sm text-left text-gray-600 whitespace-nowrap">
-                        <thead class="text-xs text-white uppercase bg-blue-900">
-                            <tr><th class="px-4 py-3 border-b">ល.រ</th><th class="px-4 py-3 border-b">ឈ្មោះឧបករណ៍មាត្រាសាស្ត្រ</th><th class="px-4 py-3 border-b text-center">ចំនួនសរុប</th><th class="px-4 py-3 border-b text-center">ចំនួនក្រុមហ៊ុន</th><th class="px-4 py-3 border-b">ប្រទេសផលិតដើម</th><th class="px-4 py-3 border-b">ឆ្នាំផលិត</th><th class="px-4 py-3 border-b">ខេត្ត/ក្រុងច្រើនជាងគេ</th></tr>
-                        </thead>
-                        <tbody id="toolsSummaryBody"></tbody>
-                    </table>
+                    <!-- KPI Card 6: Approved Companies -->
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                        <div class="p-3 rounded-lg bg-emerald-50 text-emerald-700 flex-shrink-0">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">ក្រុមហ៊ុនអនុម័តរួច</p>
+                            <h3 class="text-xl font-bold text-emerald-700 mt-0.5" id="kpi-approved-companies">0</h3>
+                            <p class="text-[9px] text-slate-400 truncate mt-0.5">ស្ថានភាព COMPLETED</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <h3 class="font-moul text-md mb-4 text-purple-800">តារាងសរុបទំនិញវេចខ្ចប់ ដែលបានចុះបញ្ជី</h3>
-                <div class="table-container overflow-x-auto overflow-y-auto max-h-80 border border-gray-300 rounded-lg">
-                    <table class="w-full text-sm text-left text-gray-600 whitespace-nowrap">
-                        <thead class="text-xs text-white uppercase bg-blue-900">
-                            <tr><th class="px-4 py-3 border-b">ល.រ</th><th class="px-4 py-3 border-b">ឈ្មោះទំនិញវេចខ្ចប់</th><th class="px-4 py-3 border-b text-center">ចំនួនសរុប</th><th class="px-4 py-3 border-b text-center">ចំនួនក្រុមហ៊ុន</th><th class="px-4 py-3 border-b">ប្រទេសផលិតដើម</th><th class="px-4 py-3 border-b">ឆ្នាំផលិត</th><th class="px-4 py-3 border-b">ខេត្ត/ក្រុងច្រើនជាងគេ</th></tr>
-                        </thead>
-                        <tbody id="packagesSummaryBody"></tbody>
-                    </table>
+
+                <!-- Charts Section Grid 1 (Monthly + Status) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Monthly registration Card (2/3 width) -->
+                    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                            <h3 class="font-moul text-xs text-slate-800">ចំនួនក្រុមហ៊ុន/សហគ្រាសដែលបានដាក់ស្នើចុះបញ្ជីប្រចាំខែ</h3>
+                            <span id="chartPeriod" class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 rounded">មិនទាន់មានទិន្នន័យ</span>
+                        </div>
+                        <div class="relative h-72 w-full">
+                            <canvas id="monthlyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Status Donut Card (1/3 width) -->
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                            <h3 class="font-moul text-xs text-slate-800">ស្ថានភាពឯកសារ</h3>
+                        </div>
+                        <div class="relative h-72 w-full flex items-center justify-center">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Approval Delay Analysis -->
-        <div class="mb-8 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-            <h3 class="font-moul text-md mb-2 text-orange-800">តារាងបញ្ជាក់ការយឺតក្នុងការអនុម័ត</h3>
-            <p class="text-sm text-gray-600 mb-4">កំណត់ស្តង់ដារសេវា៖ ដំណើរការត្រូវបញ្ចប់ក្នុងរយៈពេល ៥ ទៅ ៧ថ្ងៃ។ គិតចាប់ពីថ្ងៃចុះបញ្ជី រហូតដល់គម្រប់ ៧ថ្ងៃ មិនទាន់ចាត់ទុកថាយឺតទេ។ ចាប់ពីថ្ងៃទី៨ ឡើងទៅ ទើបប្រព័ន្ធចាប់ផ្តើមរាប់ថាយឺត ដោយថ្ងៃទី៨ ស្មើនឹងយឺត ១ថ្ងៃ។</p>
-            <div id="delaySummary" class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3"></div>
-            <div class="table-container overflow-x-auto overflow-y-auto max-h-96 border border-gray-300 rounded-lg shadow-inner">
-                <table class="w-full text-sm text-left text-gray-600 whitespace-nowrap">
-                    <thead class="text-xs text-white uppercase bg-blue-900">
-                        <tr><th class="px-4 py-3 border-b">ល.រ</th><th class="px-4 py-3 border-b">ឈ្មោះក្រុមហ៊ុន</th><th class="px-4 py-3 border-b">រាជធានី/ខេត្ត</th><th class="px-4 py-3 border-b">ប្រភេទ</th><th class="px-4 py-3 border-b">ថ្ងៃចុះបញ្ជី</th><th class="px-4 py-3 border-b text-center">ថ្ងៃដំណើរការ</th><th class="px-4 py-3 border-b text-center">យឺតចំនួនថ្ងៃ</th><th class="px-4 py-3 border-b">យឺតនៅអ្នកណា</th><th class="px-4 py-3 border-b text-center">ស្ថានភាព</th></tr>
-                    </thead>
-                    <tbody id="delayTableBody"></tbody>
-                </table>
-            </div>
-        </div>
+                <!-- Charts Section Grid 2 (Province Company distribution + Quick Actions) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Province Company registration card (2/3 width) -->
+                    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                            <h3 class="font-moul text-xs text-slate-800">ចំនួនក្រុមហ៊ុន/សហគ្រាសតាមរាជធានី/ខេត្ត</h3>
+                        </div>
+                        <div class="relative h-96 w-full">
+                            <canvas id="companyProvinceChart"></canvas>
+                        </div>
+                        <p id="companyProvinceTopSummary" class="mt-4 text-[10px] text-blue-900 font-bold text-center"></p>
+                    </div>
 
-        <!-- Footer / Signatures -->
-        <div class="flex justify-between mt-12 mb-8 px-8 print-break">
-            <div class="text-center">
-                <p class="mb-16 font-bold text-gray-700">បានឃើញ និងឯកភាព<br>ប្រធានមជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ</p>
-            </div>
-            <div class="text-center">
-                <p class="mb-2">រាជធានីភ្នំពេញ ថ្ងៃទី.........ខែ.........ឆ្នាំ..........</p>
-                <p class="mb-16 font-bold text-gray-700">អ្នករៀបចំរបាយការណ៍</p>
-            </div>
+                    <!-- Shortcuts Panel / Quick actions (1/3 width) -->
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="mb-4 border-b border-slate-100 pb-3">
+                                <h3 class="font-moul text-xs text-slate-800">ឧបករណ៍សម្រួលការងារ</h3>
+                            </div>
+                            <div class="space-y-2">
+                                <button onclick="document.getElementById('csvFileInput').click()" class="w-full flex items-center justify-between bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[11px] p-3 rounded-lg transition text-left">
+                                    <span>📥 នាំចូលទិន្នន័យ Excel/CSV</span>
+                                    <span class="text-slate-400">&rarr;</span>
+                                </button>
+                                <a href="#recentCompaniesCard" class="w-full flex items-center justify-between bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[11px] p-3 rounded-lg transition text-left">
+                                    <span>🏢 មើលបញ្ជីក្រុមហ៊ុន</span>
+                                    <span class="text-slate-400">&rarr;</span>
+                                </a>
+                                <a href="#toolsTableCard" class="w-full flex items-center justify-between bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[11px] p-3 rounded-lg transition text-left">
+                                    <span>⚙️ មើលបញ្ជីឧបករណ៍វាស់វែង</span>
+                                    <span class="text-slate-400">&rarr;</span>
+                                </a>
+                                <a href="#packagesTableCard" class="w-full flex items-center justify-between bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[11px] p-3 rounded-lg transition text-left">
+                                    <span>📦 មើលបញ្ជីទំនិញវេចខ្ចប់</span>
+                                    <span class="text-slate-400">&rarr;</span>
+                                </a>
+                                <a href="#delayTableCard" class="w-full flex items-center justify-between bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[11px] p-3 rounded-lg transition text-left">
+                                    <span>⚠️ មើលបញ្ជីឯកសារយឺត</span>
+                                    <span class="text-slate-400">&rarr;</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-slate-100 space-y-2">
+
+                            
+                            <button type="button" id="quickWordBtn" disabled onclick="document.getElementById('downloadWordBtn').click()" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs py-3 rounded-lg shadow-sm transition">
+                                ⬇ ទាញយក Word Report
+                            </button>
+                            <button type="button" id="quickExcelBtn" disabled onclick="document.getElementById('downloadExcelBtn').click()" class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs py-3 rounded-lg shadow-sm transition">
+                                ⬇ ទាញយក Excel Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section Grid 3 (Registered items by province) -->
+                <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                        <h3 class="font-moul text-xs text-slate-800">精度/ឧបករណ៍ដែលបានចុះបញ្ជីតាមរាជធានី/ខេត្ត</h3>
+                    </div>
+                    <div class="relative h-96 w-full">
+                        <canvas id="provinceChart"></canvas>
+                    </div>
+                    <p id="provinceTopSummary" class="mt-4 text-[10px] text-blue-900 font-bold text-center"></p>
+                </div>
+
+                <!-- Tables Container Grid -->
+                <div id="tableSection" class="space-y-6">
+                    
+                    <!-- Table 1: Recent registrations -->
+                    <div id="recentCompaniesCard" class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                            <div>
+                                <h3 class="font-moul text-xs text-slate-900">ក្រុមហ៊ុន/សហគ្រាសដែលបានដាក់ស្នើថ្មីៗ</h3>
+                                <p class="text-[10px] text-slate-500 mt-1 font-medium">បញ្ជីលម្អិតអំពីសំណុំឯកសារក្រុមហ៊ុនដែលបានដាក់ស្នើ និងចំនួនមុខសញ្ញាចុះបញ្ជី។</p>
+                            </div>
+                        </div>
+                        <div class="table-container overflow-x-auto border border-slate-200 rounded-lg max-h-[400px]">
+                            <table class="w-full text-xs text-left text-slate-600 whitespace-nowrap">
+                                <thead class="text-slate-700 bg-slate-50 border-b border-slate-200 font-bold text-[11px]">
+                                    <tr>
+                                        <th class="px-3 py-2.5 text-center">ល.រ</th>
+                                        <th class="px-3 py-2.5">ឈ្មោះក្រុមហ៊ុន/សហគ្រាស</th>
+                                        <th class="px-3 py-2.5">លេខចុះបញ្ជី</th>
+                                        <th class="px-3 py-2.5">រាជធានី/ខេត្ត</th>
+                                        <th class="px-3 py-2.5">ថ្ងៃចុះបញ្ជី</th>
+                                        <th class="px-3 py-2.5 text-center">ចំនួនមុខសញ្ញា</th>
+                                        <th class="px-3 py-2.5 text-center">ស្ថានភាព</th>
+                                        <th class="px-3 py-2.5 text-center">សកម្មភាព</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="companiesSummaryBody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Table 2: Province summary -->
+                    <div id="provinceTableCard" class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                            <div>
+                                <h3 class="font-moul text-xs text-slate-900">សរុបក្រុមហ៊ុន/សហគ្រាសតាមរាជធានី/ខេត្ត</h3>
+                                <p class="text-[10px] text-slate-500 mt-1 font-medium">ចំនួនក្រុមហ៊ុនចុះបញ្ជីថ្មី និងចុះបញ្ជីបន្ត បែងចែកតាមខេត្ត/ក្រុង។</p>
+                            </div>
+                        </div>
+                        <div class="table-container overflow-x-auto border border-slate-200 rounded-lg max-h-[350px]">
+                            <table class="w-full text-xs text-left text-slate-600 whitespace-nowrap">
+                                <thead class="text-slate-700 bg-slate-50 border-b border-slate-200 font-bold">
+                                    <tr>
+                                        <th class="px-4 py-3 text-center">ល.រ</th>
+                                        <th class="px-4 py-3">រាជធានី/ខេត្ត</th>
+                                        <th class="px-4 py-3 text-center">ចំនួនក្រុមហ៊ុន/សហគ្រាស</th>
+                                        <th class="px-4 py-3 text-center">ការចុះបញ្ជីថ្មី</th>
+                                        <th class="px-4 py-3 text-center">ការចុះបញ្ជីបន្ត</th>
+                                        <th class="px-4 py-3 text-center">សមាមាត្រ (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Table 3: Instrument Summary -->
+                    <div id="toolsTableCard" class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                            <div>
+                                <h3 class="font-moul text-xs text-emerald-800">តារាងសរុបឧបករណ៍មាត្រាសាស្ត្រដែលបានចុះបញ្ជី</h3>
+                                <p class="text-[10px] text-slate-500 mt-1 font-medium">សង្ខេបឧបករណ៍វាស់វែងតាមប្រភេទទិន្នន័យ ក្រុមហ៊ុនដែលប្រើប្រាស់ និងប្រភពដើម។</p>
+                            </div>
+                        </div>
+                        <div class="table-container overflow-x-auto border border-slate-200 rounded-lg max-h-[350px]">
+                            <table class="w-full text-xs text-left text-slate-600 whitespace-nowrap">
+                                <thead class="text-slate-700 bg-slate-50 border-b border-slate-200 font-bold">
+                                    <tr>
+                                        <th class="px-4 py-3 text-center">ល.រ</th>
+                                        <th class="px-4 py-3">ឈ្មោះឧបករណ៍មាត្រាសាស្ត្រ</th>
+                                        <th class="px-4 py-3 text-center">ចំនួនសរុប</th>
+                                        <th class="px-4 py-3 text-center">ចំនួនក្រុមហ៊ុន</th>
+                                        <th class="px-4 py-3">ប្រទេសផលិតដើម</th>
+                                        <th class="px-4 py-3">ឆ្នាំផលិត</th>
+                                        <th class="px-4 py-3">រាជធានី/ខេត្តដែលមានចំនួនខ្ពស់បំផុត</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="toolsSummaryBody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Table 4: Packaged Goods Summary -->
+                    <div id="packagesTableCard" class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                            <div>
+                                <h3 class="font-moul text-xs text-purple-800">តារាងសរុបទំនិញវេចខ្ចប់ដែលបានចុះបញ្ជី</h3>
+                                <p class="text-[10px] text-slate-500 mt-1 font-medium">សង្ខេបទំនិញវេចខ្ចប់ដែលបានចុះបញ្ជី ក្រុមហ៊ុន និងព័ត៌មានលម្អិត។</p>
+                            </div>
+                        </div>
+                        <div class="table-container overflow-x-auto border border-slate-200 rounded-lg max-h-[350px]">
+                            <table class="w-full text-xs text-left text-slate-600 whitespace-nowrap">
+                                <thead class="text-slate-700 bg-slate-50 border-b border-slate-200 font-bold">
+                                    <tr>
+                                        <th class="px-4 py-3 text-center">ល.រ</th>
+                                        <th class="px-4 py-3">ឈ្មោះទំនិញវេចខ្ចប់</th>
+                                        <th class="px-4 py-3 text-center">ចំនួនសរុប</th>
+                                        <th class="px-4 py-3 text-center">Double Click or single click</th>
+                                        <th class="px-4 py-3">ប្រទេសផលិតដើម</th>
+                                        <th class="px-4 py-3">ឆ្នាំផលិត</th>
+                                        <th class="px-4 py-3">រាជធានី/ខេត្តដែលមានចំនួនខ្ពស់បំផុត</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="packagesSummaryBody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Table 5: Delayed Documents -->
+                    <div id="delayTableCard" class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                            <div>
+                                <h3 class="font-moul text-xs text-rose-800">ឯកសារយឺតលើស ៧ថ្ងៃ</h3>
+                                <p class="text-[10px] text-slate-500 mt-1 font-medium">
+                                    គណនាផ្អែកលើសំណុំឯកសារក្រុមហ៊ុន (ល.រ មុខសញ្ញា = ១)។ រយៈពេលលើស ៧ថ្ងៃ គិតចាប់ពីថ្ងៃចុះបញ្ជី គឺជាការយឺតយ៉ាវ។
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Delay stats blocks -->
+                        <div id="delaySummary" class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+
+                        <div class="table-container overflow-x-auto border border-slate-200 rounded-lg max-h-[350px]">
+                            <table class="w-full text-xs text-left text-slate-600 whitespace-nowrap">
+                                <thead class="text-slate-700 bg-slate-50 border-b border-slate-200 font-bold">
+                                    <tr>
+                                        <th class="px-4 py-3 text-center">ល.រ</th>
+                                        <th class="px-4 py-3">ឈ្មោះក្រុមហ៊ុន/សហគ្រាស</th>
+                                        <th class="px-4 py-3">រាជធានី/ខេត្ត</th>
+                                        <th class="px-4 py-3">ប្រភេទសំណើ</th>
+                                        <th class="px-4 py-3">ថ្ងៃចុះបញ្ជី</th>
+                                        <th class="px-4 py-3 text-center">ថ្ងៃដំណើរការ</th>
+                                        <th class="px-4 py-3 text-center text-rose-600">យឺតចំនួនថ្ងៃ</th>
+                                        <th class="px-4 py-3">យឺតនៅអ្នកណា</th>
+                                        <th class="px-4 py-3 text-center">ស្ថានភាព</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="delayTableBody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer Section -->
+            <footer class="h-10 bg-white border-t border-slate-200 flex items-center justify-between px-6 text-[9px] text-slate-400 font-bold flex-shrink-0">
+                <span>រក្សាសិទ្ធិ &copy; ២០២៦ មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ &bull; នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</span>
+                <span>v1.0.0</span>
+            </footer>
         </div>
     </div>
-
     <script>
         const embeddedRows = [];
         const defaultCSV = '';
@@ -350,15 +577,28 @@
         const EXPORT_FILE_BASENAME = 'របាយការណ៍ចុះបញ្ជីមាត្រាសាស្ត្រ_នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម';
 
         function setupExportButtons() {
-            document.getElementById('downloadPdfBtn')?.addEventListener('click', downloadPdfReport);
             document.getElementById('downloadWordBtn')?.addEventListener('click', downloadWordReport);
+            document.getElementById('downloadExcelBtn')?.addEventListener('click', downloadExcelReport);
         }
 
         async function prepareExportMode(button, workingText) {
+            let companion = null;
+            if (button) {
+                if (button.id === 'downloadWordBtn') companion = document.getElementById('quickWordBtn');
+                else if (button.id === 'quickWordBtn') companion = document.getElementById('downloadWordBtn');
+                else if (button.id === 'downloadExcelBtn') companion = document.getElementById('quickExcelBtn');
+                else if (button.id === 'quickExcelBtn') companion = document.getElementById('downloadExcelBtn');
+            }
+
             if (button) {
                 button.disabled = true;
                 button.dataset.originalText = button.innerText;
                 button.innerText = workingText;
+            }
+            if (companion) {
+                companion.disabled = true;
+                companion.dataset.originalText = companion.innerText;
+                companion.innerText = workingText;
             }
             document.body.classList.add('exporting');
             if (document.fonts && document.fonts.ready) await document.fonts.ready;
@@ -366,145 +606,800 @@
         }
 
         function cleanupExportMode(button) {
+            let companion = null;
+            if (button) {
+                if (button.id === 'downloadWordBtn') companion = document.getElementById('quickWordBtn');
+                else if (button.id === 'quickWordBtn') companion = document.getElementById('downloadWordBtn');
+                else if (button.id === 'downloadExcelBtn') companion = document.getElementById('quickExcelBtn');
+                else if (button.id === 'quickExcelBtn') companion = document.getElementById('downloadExcelBtn');
+            }
+
             document.body.classList.remove('exporting');
             if (button) {
                 button.disabled = false;
                 button.innerText = button.dataset.originalText || button.innerText;
             }
-        }
-
-        async function downloadPdfReport() {
-            const button = document.getElementById('downloadPdfBtn');
-            const report = document.querySelector('.report-container');
-            if (!report) return;
-            try {
-                await prepareExportMode(button, 'កំពុងបង្កើត PDF...');
-                if (typeof html2pdf === 'undefined') {
-                    alert('មិនអាចបង្កើត PDF ដោយស្វ័យប្រវត្តិបានទេ។ សូមប្រើ Print ហើយ Save as PDF។');
-                    window.print();
-                    return;
-                }
-                const options = {
-                    margin: [8, 8, 8, 8],
-                    filename: `${EXPORT_FILE_BASENAME}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: {
-                        scale: 2,
-                        useCORS: true,
-                        allowTaint: true,
-                        backgroundColor: '#ffffff',
-                        scrollX: 0,
-                        scrollY: 0,
-                        windowWidth: report.scrollWidth
-                    },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-                    pagebreak: { mode: ['css', 'legacy'], before: '.print-break', avoid: ['.no-page-break'] }
-                };
-                await html2pdf().set(options).from(report).save();
-            } catch (error) {
-                console.error(error);
-                alert('មានបញ្ហាក្នុងការបង្កើត PDF។ សូមព្យាយាមម្តងទៀត ឬប្រើ Print > Save as PDF។');
-            } finally {
-                cleanupExportMode(button);
+            if (companion) {
+                companion.disabled = false;
+                companion.innerText = companion.dataset.originalText || companion.innerText;
             }
         }
 
-        function replaceCanvasesWithImages(sourceReport, clonedReport) {
-            const sourceCanvases = sourceReport.querySelectorAll('canvas');
-            const clonedCanvases = clonedReport.querySelectorAll('canvas');
-            sourceCanvases.forEach((canvas, index) => {
-                const clonedCanvas = clonedCanvases[index];
-                if (!clonedCanvas) return;
-                const image = document.createElement('img');
-                try {
-                    image.src = canvas.toDataURL('image/png');
-                } catch (e) {
-                    image.alt = 'Chart image';
-                }
-                image.style.width = '100%';
-                image.style.maxWidth = '100%';
-                image.style.height = 'auto';
-                image.style.display = 'block';
-                clonedCanvas.replaceWith(image);
-            });
+        async function getChartImage(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return null;
+            return canvas.toDataURL('image/png');
         }
 
-        function inlineComputedStyles(sourceRoot, cloneRoot) {
-            const properties = [
-                'font-family','font-size','font-weight','font-style','line-height','color','background-color',
-                'text-align','vertical-align','text-decoration','display','justify-content','align-items','flex-direction',
-                'grid-template-columns','grid-column','gap','width','max-width','min-width','height','min-height','max-height',
-                'margin','margin-top','margin-right','margin-bottom','margin-left','padding','padding-top','padding-right','padding-bottom','padding-left',
-                'border','border-top','border-right','border-bottom','border-left','border-radius','box-shadow',
-                'white-space','word-break','overflow','position','top'
-            ];
-            const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
-            const cloneElements = [cloneRoot, ...cloneRoot.querySelectorAll('*')];
-            sourceElements.forEach((sourceEl, index) => {
-                const cloneEl = cloneElements[index];
-                if (!cloneEl) return;
-                const computed = window.getComputedStyle(sourceEl);
-                const inline = properties.map(prop => {
-                    const value = computed.getPropertyValue(prop);
-                    return value ? `${prop}:${value};` : '';
-                }).join('');
-                cloneEl.setAttribute('style', `${cloneEl.getAttribute('style') || ''};${inline}`);
+        function base64ToUint8(base64String) {
+            const base64 = base64String.split(',')[1] || base64String;
+            const binary = window.atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        const monthNamesKh = ['មករា','កុម្ភៈ','មីនា','មេសា','ឧសភា','មិថុនា','កក្កដា','សីហា','កញ្ញា','តុលា','វិច្ឆិកា','ធ្នូ'];
+
+        function generateNarrative(data) {
+            const topProvince = data.provinces.length ? data.provinces[0] : null;
+            const toolsPct = data.totals.total ? ((data.totals.toolsCount / data.totals.total) * 100).toFixed(1) : '0';
+            const pkgPct = data.totals.total ? ((data.totals.packageCount / data.totals.total) * 100).toFixed(1) : '0';
+            
+            let text = `យោងតាមទិន្នន័យដែលបានវិភាគ មុខសញ្ញាឧបករណ៍មាត្រាសាស្ត្រ និងទំនិញវេចខ្ចប់ដែលបានចុះបញ្ជីសរុបមានចំនួន ${toKhmerDigits(data.totals.total)} ករណី (ឧបករណ៍មាត្រាសាស្ត្រចំនួន ${toKhmerDigits(data.totals.toolsCount)} ស្មើនឹង ${toKhmerDigits(toolsPct)}% និងទំនិញវេចខ្ចប់ចំនួន ${toKhmerDigits(data.totals.packageCount)} ស្មើនឹង ${toKhmerDigits(pkgPct)}%) ដាក់ស្នើដោយក្រុមហ៊ុន/សហគ្រាសសរុបចំនួន ${toKhmerDigits(data.totals.companyCount)} ក្រុមហ៊ុន។`;
+            
+            text += ` ក្នុងចំណោមនោះ ចំនួនសំណុំឯកសារដែលបានអនុម័តរួចមានចំនួន ${toKhmerDigits(data.totals.approvedCompanyCount)} ក្រុមហ៊ុន (${toKhmerDigits(((data.totals.approvedCompanyCount/data.totals.companyCount)*100).toFixed(1))}%) និងកំពុងស្ថិតក្នុងដំណាក់កាលពិនិត្យ ឬរង់ចាំការអនុម័តមានចំនួន ${toKhmerDigits(data.totals.pendingCount)} ក្រុមហ៊ុន (${toKhmerDigits(((data.totals.pendingCount/data.totals.companyCount)*100).toFixed(1))}%)។`;
+            
+            if (topProvince) {
+                text += ` រាជធានី/ខេត្តដែលមានចំនួនក្រុមហ៊ុនស្នើសុំចុះបញ្ជីច្រើនជាងគេគឺ ${topProvince.province} ចំនួន ${toKhmerDigits(topProvince.total)} ក្រុមហ៊ុន (ស្មើនឹង ${toKhmerDigits(((topProvince.total/data.totals.companyCount)*100).toFixed(1))}%)។`;
+            }
+            
+            const delayedCount = data.delayedDocuments.length;
+            if (delayedCount > 0) {
+                text += ` ប្រព័ន្ធក៏បានរកឃើញសំណុំឯកសារយឺតពេលលើសពីស្ដង់ដារសេវា (៧ ថ្ងៃ) ចំនួន ${toKhmerDigits(delayedCount)} ករណី ដែលត្រូវតាមដាន និងពន្លឿនការអនុម័ត។`;
+            } else {
+                text += ` មិនមានសំណុំឯកសារណាដែលយឺតពេលលើសពីស្ដង់ដារសេវា ៧ ថ្ងៃ ឡើយ។`;
+            }
+            
+            return text;
+        }
+
+        function createWordTable(headers, rows, widths) {
+            const { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, AlignmentType } = docx;
+            
+            const headerRow = new TableRow({
+                tableHeader: true,
+                children: headers.map((h, i) => new TableCell({
+                    backgroundColor: "1E3A8A",
+                    width: { size: widths[i], type: WidthType.PERCENTAGE },
+                    children: [new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        children: [new TextRun({ text: h, font: "Siemreap", bold: true, color: "FFFFFF", size: 20 })]
+                    })]
+                }))
+            });
+
+            const tableRows = [headerRow];
+            rows.forEach((r, rIdx) => {
+                tableRows.push(new TableRow({
+                    children: r.map((c, i) => new TableCell({
+                        width: { size: widths[i], type: WidthType.PERCENTAGE },
+                        children: [new Paragraph({
+                            alignment: c.align || AlignmentType.LEFT,
+                            children: [new TextRun({ text: String(c.text), font: "Siemreap", bold: !!c.bold, size: 20 })]
+                        })]
+                    }))
+                }));
+            });
+
+            return new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: tableRows
             });
         }
 
         async function downloadWordReport() {
             const button = document.getElementById('downloadWordBtn');
-            const report = document.querySelector('.report-container');
-            if (!report) return;
             try {
                 await prepareExportMode(button, 'កំពុងបង្កើត Word...');
-                const clonedReport = report.cloneNode(true);
-                replaceCanvasesWithImages(report, clonedReport);
-                inlineComputedStyles(report, clonedReport);
-                clonedReport.querySelectorAll('.table-container').forEach(el => {
-                    el.style.maxHeight = 'none';
-                    el.style.overflow = 'visible';
-                });
-                clonedReport.style.width = '100%';
-                clonedReport.style.maxWidth = '100%';
-                clonedReport.style.margin = '0 auto';
-                clonedReport.style.boxShadow = 'none';
+                
+                if (!window.reportData || !window.reportData.sourceRows || !window.reportData.sourceRows.length) {
+                    alert('សូមបញ្ចូលទិន្នន័យជាមុនសិន។');
+                    return;
+                }
 
-                const html = `<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta charset="utf-8">
-<title>${EXPORT_FILE_BASENAME}</title>
-<!--[if gte mso 9]>
-<xml>
-<w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument>
-</xml>
-<![endif]-->
-<style>
-@page Section1 { size: 841.9pt 595.3pt; mso-page-orientation: landscape; margin: 28.35pt 28.35pt 28.35pt 28.35pt; }
-div.Section1 { page: Section1; }
-body { font-family: 'Khmer OS Siemreap', 'Siemreap', Arial, sans-serif; }
-table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
-tr { page-break-inside: avoid; page-break-after: auto; }
-th, td { border: 1px solid #d1d5db; }
-th { background: #1e3a8a; color: #ffffff; }
-img { max-width: 100%; height: auto; }
-.no-print { display: none !important; }
-</style>
-</head>
-<body><div class="Section1">${clonedReport.outerHTML}</div></body>
-</html>`;
-                const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `${EXPORT_FILE_BASENAME}.doc`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
-            } catch (error) {
-                console.error(error);
-                alert('មានបញ្ហាក្នុងការបង្កើត Word។ សូមព្យាយាមម្តងទៀត។');
+                if (typeof docx === 'undefined') {
+                    alert('បណ្ណាល័យ docx.js មិនទាន់បាន load ត្រឹមត្រូវទេ។ សូមពិនិត្យការតភ្ជាប់អ៊ីនធឺណិត។');
+                    return;
+                }
+
+                const data = window.reportData;
+                const {
+                    Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+                    WidthType, BorderStyle, AlignmentType, ImageRun
+                } = docx;
+
+                // 1. Get images
+                const monthlyImg = await getChartImage('monthlyChart');
+                const statusImg = await getChartImage('statusChart');
+                const provinceImg = await getChartImage('companyProvinceChart');
+
+                // 2. Build Header (Ministry on Left, Nation on Right)
+                const headerTable = new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: {
+                        top: { style: BorderStyle.NONE },
+                        left: { style: BorderStyle.NONE },
+                        bottom: { style: BorderStyle.NONE },
+                        right: { style: BorderStyle.NONE },
+                        insideHorizontal: { style: BorderStyle.NONE },
+                        insideVertical: { style: BorderStyle.NONE }
+                    },
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    width: { size: 55, type: WidthType.PERCENTAGE },
+                                    children: [
+                                        new Paragraph({ children: [new TextRun({ text: "ក្រសួងឧស្សាហកម្ម វិទ្យាសាស្ត្រ បច្ចេកវិទ្យា និងនវានុវត្តន៍", font: "Moul", size: 18, color: "1E3A8A" })] }),
+                                        new Paragraph({ children: [new TextRun({ text: "មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ", font: "Moul", size: 20 })] }),
+                                        new Paragraph({ children: [new TextRun({ text: "នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម", font: "Moul", size: 18, color: "1E3A8A" })] }),
+                                        new Paragraph({ children: [new TextRun({ text: "------------------", font: "Siemreap", size: 16 })] }),
+                                        new Paragraph({ children: [new TextRun({ text: "លេខ៖..................... មមជ", font: "Siemreap", size: 20 })] })
+                                    ]
+                                }),
+                                new TableCell({
+                                    width: { size: 45, type: WidthType.PERCENTAGE },
+                                    children: [
+                                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "ព្រះរាជាណាចក្រកម្ពុជា", font: "Moul", size: 22, color: "1E3A8A" })] }),
+                                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "ជាតិ សាសនា ព្រះមហាក្សត្រ", font: "Moul", size: 18 })] }),
+                                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "...........................", font: "Siemreap", size: 20 })] })
+                                    ]
+                                })
+                            ]
+                        })
+                    ]
+                });
+
+                // 3. Build Body Children
+                const children = [
+                    headerTable,
+                    new Paragraph({ spacing: { before: 240, after: 240 } }), // spacer
+                    new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        children: [new TextRun({ text: "របាយការណ៍បូកសរុបលទ្ធផលការងារចុះបញ្ជីមាត្រាសាស្ត្រ", font: "Moul", size: 26, color: "1E3A8A", underline: {} })]
+                    }),
+                    new Paragraph({ spacing: { before: 120, after: 120 } }),
+                    new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        children: [
+                            new TextRun({ text: "សូមគោរពជូន\n", font: "Moul", size: 22 }),
+                            new TextRun({ text: "ឯកឧត្តមប្រធាន មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ", font: "Moul", size: 24, color: "1E3A8A" })
+                        ]
+                    }),
+                    new Paragraph({ spacing: { before: 240, after: 240 } }),
+                    new Paragraph({
+                        indent: { firstLine: 720 },
+                        alignment: AlignmentType.BOTH,
+                        children: [
+                            new TextRun({
+                                text: `តបតាមកម្មវត្ថុខាងលើ នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម មានកិត្តិយសសូមគោរពជម្រាបជូន ឯកឧត្តមប្រធាន មេត្តាជ្រាបថា យោងតាមទិន្នន័យនៃការស្នើសុំចុះបញ្ជីឧបករណ៍មាត្រាសាស្ត្រ និងទំនិញវេចខ្ចប់ ក្រុមការងារបានធ្វើការបូកសរុប និងវិភាគទិន្នន័យ ដែលមានលទ្ធផលលម្អិតដូចខាងក្រោម៖`,
+                                font: "Siemreap",
+                                size: 22
+                            })
+                        ]
+                    }),
+                    new Paragraph({ spacing: { before: 240, after: 240 } }),
+                    new Paragraph({ children: [new TextRun({ text: "១. លទ្ធផលសង្ខេប (KPIs)", font: "Moul", size: 22, color: "1E3A8A" })] })
+                ];
+
+                // KPI Table
+                let kwNewCount = 0, kwRenewalCount = 0;
+                data.companies.forEach(c => {
+                    if (c.registrationType === 'new') kwNewCount++;
+                    else kwRenewalCount++;
+                });
+
+                const kpiRows = [
+                    [{ text: "១" }, { text: "ចំនួនឧបករណ៍សរុបដែលបានចុះបញ្ជី" }, { text: formatNumber(data.totals.total), bold: true, align: AlignmentType.CENTER }],
+                    [{ text: "២" }, { text: "ឧបករណ៍មាត្រាសាស្ត្រ" }, { text: formatNumber(data.totals.toolsCount), bold: true, align: AlignmentType.CENTER }],
+                    [{ text: "៣" }, { text: "ទំនិញវេចខ្ចប់" }, { text: formatNumber(data.totals.packageCount), bold: true, align: AlignmentType.CENTER }],
+                    [{ text: "៤" }, { text: "កំពុងរង់ចាំការអនុម័ត (គិតជាសំណុំឯកសារ)" }, { text: formatNumber(data.totals.pendingCount), bold: true, align: AlignmentType.CENTER }],
+                    [{ text: "៥" }, { text: "ចំនួនសរុបក្រុមហ៊ុន/សហគ្រាសដែលបានដាក់ស្នើចុះបញ្ជី" }, { text: formatNumber(data.totals.companyCount), bold: true, align: AlignmentType.CENTER }],
+                    [{ text: "៦" }, { text: "ចំនួនក្រុមហ៊ុន/សហគ្រាសដែលបានអនុម័តរួច" }, { text: formatNumber(data.totals.approvedCompanyCount), bold: true, align: AlignmentType.CENTER }],
+                    [{ text: "៧" }, { text: "ការចុះបញ្ជីថ្មី" }, { text: formatNumber(kwNewCount), bold: true, align: AlignmentType.CENTER }],
+                    [{ text: "៨" }, { text: "ការចុះបញ្ជីបន្ត" }, { text: formatNumber(kwRenewalCount), bold: true, align: AlignmentType.CENTER }]
+                ];
+
+                children.push(createWordTable(["ល.រ", "សូចនាករគន្លឹះ (KPIs)", "លទ្ធផលសរុប"], kpiRows, [10, 60, 30]));
+
+                // Narrative analysis
+                children.push(new Paragraph({ spacing: { before: 240, after: 120 } }));
+                children.push(new Paragraph({
+                    indent: { firstLine: 720 },
+                    alignment: AlignmentType.BOTH,
+                    children: [new TextRun({ text: generateNarrative(data), font: "Siemreap", size: 22 })]
+                }));
+
+                // Images table (side-by-side)
+                children.push(new Paragraph({ spacing: { before: 240, after: 120 } }));
+                children.push(new Paragraph({ children: [new TextRun({ text: "២. ក្រាហ្វិកវិភាគទិន្នន័យ", font: "Moul", size: 22, color: "1E3A8A" })] }));
+
+                const imageCells = [];
+                if (monthlyImg) {
+                    imageCells.push(new TableCell({
+                        width: { size: 50, type: WidthType.PERCENTAGE },
+                        children: [
+                            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "ក្រាហ្វិកបង្ហាញចំនួនស្នើសុំចុះបញ្ជីប្រចាំខែ", font: "Moul", size: 16 })] }),
+                            new Paragraph({
+                                alignment: AlignmentType.CENTER,
+                                children: [new ImageRun({
+                                    data: base64ToUint8(monthlyImg),
+                                    transformation: { width: 280, height: 160 }
+                                })]
+                            })
+                        ]
+                    }));
+                }
+                if (statusImg) {
+                    imageCells.push(new TableCell({
+                        width: { size: 50, type: WidthType.PERCENTAGE },
+                        children: [
+                            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "ស្ថានភាពឯកសារ", font: "Moul", size: 16 })] }),
+                            new Paragraph({
+                                alignment: AlignmentType.CENTER,
+                                children: [new ImageRun({
+                                    data: base64ToUint8(statusImg),
+                                    transformation: { width: 180, height: 160 }
+                                })]
+                            })
+                        ]
+                    }));
+                }
+
+                if (imageCells.length > 0) {
+                    children.push(new Table({
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                        borders: {
+                            top: { style: BorderStyle.NONE },
+                            left: { style: BorderStyle.NONE },
+                            bottom: { style: BorderStyle.NONE },
+                            right: { style: BorderStyle.NONE },
+                            insideHorizontal: { style: BorderStyle.NONE },
+                            insideVertical: { style: BorderStyle.NONE }
+                        },
+                        rows: [new TableRow({ children: imageCells })]
+                    }));
+                }
+
+                // Add Province Chart
+                if (provinceImg) {
+                    children.push(new Paragraph({ spacing: { before: 240, after: 120 } }));
+                    children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "ក្រាហ្វិកបង្ហាញចំនួនក្រុមហ៊ុន/សហគ្រាសតាមរាជធានី/ខេត្ត", font: "Moul", size: 16 })] }));
+                    children.push(new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        children: [new ImageRun({
+                            data: base64ToUint8(provinceImg),
+                            transformation: { width: 500, height: 260 }
+                        })]
+                    }));
+                }
+
+                // Province Table
+                children.push(new Paragraph({ spacing: { before: 240, after: 120 } }));
+                children.push(new Paragraph({ children: [new TextRun({ text: "៣. បញ្ជីរាយនាមក្រុមហ៊ុន/សហគ្រាសតាមរាជធានី/ខេត្ត", font: "Moul", size: 22, color: "1E3A8A" })] }));
+
+                const sortedProvinces = [...data.provinces];
+                const provinceRows = [];
+                let otherTotal = 0, otherNew = 0, otherRenewal = 0;
+                sortedProvinces.forEach((p, idx) => {
+                    if (idx < 5) {
+                        provinceRows.push(p);
+                    } else {
+                        otherTotal += p.total;
+                        otherNew += p.newCount;
+                        otherRenewal += p.renewalCount;
+                    }
+                });
+                if (otherTotal > 0) {
+                    provinceRows.push({
+                        province: 'ផ្សេងៗ (Others)',
+                        total: otherTotal,
+                        newCount: otherNew,
+                        renewalCount: otherRenewal
+                    });
+                }
+
+                const wordProvRows = provinceRows.map((p, idx) => {
+                    const ratio = ((p.total / data.totals.companyCount) * 100).toFixed(1) + '%';
+                    return [
+                        { text: toKhmerDigits(idx + 1), align: AlignmentType.CENTER },
+                        { text: p.province },
+                        { text: formatNumber(p.total), align: AlignmentType.CENTER, bold: true },
+                        { text: formatNumber(p.newCount), align: AlignmentType.CENTER },
+                        { text: formatNumber(p.renewalCount), align: AlignmentType.CENTER },
+                        { text: toKhmerDigits(ratio), align: AlignmentType.CENTER }
+                    ];
+                });
+
+                children.push(createWordTable(
+                    ["ល.រ", "រាជធានី/ខេត្ត", "សរុប", "ការចុះបញ្ជីថ្មី", "ការចុះបញ្ជីបន្ត", "សមាមាត្រ (%)"],
+                    wordProvRows,
+                    [10, 35, 15, 15, 15, 10]
+                ));
+
+                // Signature
+                children.push(new Paragraph({ spacing: { before: 480, after: 480 } }));
+                const signatureTable = new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: {
+                        top: { style: BorderStyle.NONE },
+                        left: { style: BorderStyle.NONE },
+                        bottom: { style: BorderStyle.NONE },
+                        right: { style: BorderStyle.NONE },
+                        insideHorizontal: { style: BorderStyle.NONE },
+                        insideVertical: { style: BorderStyle.NONE }
+                    },
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    width: { size: 50, type: WidthType.PERCENTAGE },
+                                    children: [
+                                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "បានឃើញ និងឯកភាព", font: "Siemreap", bold: true, size: 22 })] }),
+                                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "ប្រធានមជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ", font: "Siemreap", bold: true, size: 22 })] }),
+                                        new Paragraph({ spacing: { before: 1200 } })
+                                    ]
+                                }),
+                                new TableCell({
+                                    width: { size: 50, type: WidthType.PERCENTAGE },
+                                    children: [
+                                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `រាជធានីភ្នំពេញ ថ្ងៃទី.........ខែ.........ឆ្នាំ..........`, font: "Siemreap", size: 22 })] }),
+                                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "អ្នករៀបចំរបាយការណ៍", font: "Siemreap", bold: true, size: 22 })] }),
+                                        new Paragraph({ spacing: { before: 1200 } })
+                                    ]
+                                })
+                            ]
+                        })
+                    ]
+                });
+                children.push(signatureTable);
+
+                // Build filename
+                let reportMonth = '';
+                let reportYear = '';
+                const firstWithDate = data.companies.find(c => c.regDateObj);
+                if (firstWithDate) {
+                    reportMonth = monthNamesKh[firstWithDate.regDateObj.getMonth()];
+                    reportYear = toKhmerDigits(firstWithDate.regDateObj.getFullYear());
+                } else {
+                    const today = new Date();
+                    reportMonth = monthNamesKh[today.getMonth()];
+                    reportYear = toKhmerDigits(today.getFullYear());
+                }
+                const filename = `របាយការណ៍ចុះបញ្ជីមាត្រាសាស្ត្រ_${reportMonth}_${reportYear}.docx`;
+
+                // 4. Generate Document
+                const doc = new Document({
+                    sections: [{
+                        properties: {
+                            page: {
+                                margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 }
+                            }
+                        },
+                        children: children
+                    }]
+                });
+
+                const blob = await Packer.toBlob(doc);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error(err);
+                alert('មានបញ្ហាក្នុងការបង្កើត Word: ' + err.message);
+            } finally {
+                cleanupExportMode(button);
+            }
+        }
+
+        async function downloadExcelReport() {
+            const button = document.getElementById('downloadExcelBtn');
+            try {
+                await prepareExportMode(button, 'កំពុងបង្កើត Excel...');
+                
+                if (!window.reportData || !window.reportData.sourceRows || !window.reportData.sourceRows.length) {
+                    alert('សូមបញ្ចូលទិន្នន័យជាមុនសិន។');
+                    return;
+                }
+
+                if (typeof ExcelJS === 'undefined') {
+                    alert('បណ្ណាល័យ ExcelJS មិនទាន់បាន load ត្រឹមត្រូវទេ។ សូមពិនិត្យការតភ្ជាប់អ៊ីនធឺណិត។');
+                    return;
+                }
+
+                const data = window.reportData;
+                const workbook = new ExcelJS.Workbook();
+                const fontName = 'Siemreap';
+                const headerBg = 'FF1E3A8A'; // Deep blue
+                const thinBorder = {
+                    top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+                };
+
+                // Helper to style tables
+                function formatTable(ws, startRow, colsCount) {
+                    ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+                        if (rowNumber < startRow) return;
+                        row.height = 20;
+                        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                            if (colNumber > colsCount) return;
+                            cell.font = { name: fontName, size: 10 };
+                            cell.border = thinBorder;
+                            if (rowNumber === startRow) {
+                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+                                cell.font = { name: fontName, size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+                                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                            } else {
+                                if (rowNumber % 2 === 0) {
+                                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                                }
+                            }
+                        });
+                    });
+                }
+
+                // Helper for autofit widths
+                function autofitWidths(ws, maxCols) {
+                    ws.columns.forEach((column, i) => {
+                        if (i >= maxCols) return;
+                        let maxLen = 12;
+                        column.eachCell({ includeEmpty: true }, cell => {
+                            const val = cell.value ? String(cell.value) : '';
+                            if (val.length > maxLen) maxLen = val.length;
+                        });
+                        column.width = Math.min(30, maxLen + 4);
+                    });
+                }
+
+                function formatKpiCard(ws, startCol, label, value, colorHex) {
+                    const labelCell = ws.getCell(`${startCol}4`);
+                    const valCell = ws.getCell(`${startCol}5`);
+                    
+                    labelCell.value = label;
+                    labelCell.font = { name: fontName, size: 9, color: { argb: 'FF475569' }, bold: true };
+                    labelCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorHex } };
+                    
+                    valCell.value = value;
+                    valCell.font = { name: fontName, size: 16, color: { argb: 'FF0F172A' }, bold: true };
+                    valCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    valCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorHex } };
+                    valCell.numFmt = '#,##0';
+
+                    labelCell.border = thinBorder;
+                    valCell.border = thinBorder;
+                }
+
+                function addChartToSheet(ws, base64Image, startCell, endCell) {
+                    if (!base64Image) return;
+                    try {
+                        const imageId = workbook.addImage({
+                            base64: base64Image,
+                            extension: 'png'
+                        });
+                        ws.addImage(imageId, `${startCell}:${endCell}`);
+                    } catch (e) {
+                        console.error('Failed to add image to sheet:', e);
+                    }
+                }
+
+                // Sheet 1: Dashboard
+                const wsDash = workbook.addWorksheet('Dashboard');
+                wsDash.views = [{ showGridLines: true }];
+                wsDash.getCell('B2').value = 'របាយការណ៍សង្ខេបលទ្ធផលចុះបញ្ជីមាត្រាសាស្ត្រជាតិ';
+                wsDash.getCell('B2').font = { name: fontName, size: 16, bold: true, color: { argb: 'FF1E3A8A' } };
+                wsDash.getCell('B3').value = `រយៈពេលរបាយការណ៍៖ ${data.period}`;
+                wsDash.getCell('B3').font = { name: fontName, size: 10, italic: true };
+
+                formatKpiCard(wsDash, 'B', 'ចំនួនឧបករណ៍សរុប', data.totals.total, 'FFF1F5F9');
+                formatKpiCard(wsDash, 'C', 'ឧបករណ៍មាត្រាសាស្ត្រ', data.totals.toolsCount, 'FFDCFCE7');
+                formatKpiCard(wsDash, 'D', 'ទំនិញវេចខ្ចប់', data.totals.packageCount, 'FFF3E8FF');
+                formatKpiCard(wsDash, 'E', 'ចំនួនក្រុមហ៊ុនសរុប', data.totals.companyCount, 'FFECFEFF');
+                formatKpiCard(wsDash, 'F', 'ក្រុមហ៊ុនបានអនុម័ត', data.totals.approvedCompanyCount, 'FFE0F2FE');
+                formatKpiCard(wsDash, 'G', 'កំពុងរង់ចាំការអនុម័ត', data.totals.pendingCount, 'FFFFF7ED');
+
+                wsDash.getCell('B7').value = 'សេចក្តីវិភាគ និងសង្ខេបលទ្ធផល៖';
+                wsDash.getCell('B7').font = { name: fontName, size: 10, bold: true };
+                wsDash.getCell('B8').value = generateNarrative(data);
+                wsDash.getCell('B8').font = { name: fontName, size: 10, italic: true };
+                wsDash.getCell('B8').alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+                wsDash.mergeCells('B8:G10');
+
+                wsDash.getCell('B12').value = 'តារាងសង្ខេបចំនួនក្រុមហ៊ុនតាមរាជធានី/ខេត្ត៖';
+                wsDash.getCell('B12').font = { name: fontName, size: 10, bold: true };
+                
+                const provHeader = ['ល.រ', 'រាជធានី/ខេត្ត', 'ចំនួនក្រុមហ៊ុន/សហគ្រាស', 'ការចុះបញ្ជីថ្មី', 'ការចុះបញ្ជីបន្ត', 'សមាមាត្រ (%)'];
+                const headerRow = wsDash.getRow(13);
+                provHeader.forEach((h, i) => {
+                    headerRow.getCell(i + 2).value = h;
+                });
+
+                let rIndex = 14;
+                data.provinces.forEach((p, idx) => {
+                    const r = wsDash.getRow(rIndex);
+                    r.getCell(2).value = idx + 1;
+                    r.getCell(3).value = p.province;
+                    r.getCell(4).value = p.total;
+                    r.getCell(5).value = p.newCount;
+                    r.getCell(6).value = p.renewalCount;
+                    r.getCell(7).value = p.total / data.totals.companyCount;
+                    rIndex++;
+                });
+
+                wsDash.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+                    if (rowNumber < 13 || rowNumber >= rIndex) return;
+                    row.height = 20;
+                    for (let c = 2; c <= 7; c++) {
+                        const cell = row.getCell(c);
+                        cell.font = { name: fontName, size: 9 };
+                        cell.border = thinBorder;
+                        if (rowNumber === 13) {
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+                            cell.font = { name: fontName, size: 9, bold: true, color: { argb: 'FFFFFFFF' } };
+                            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                        } else {
+                            if (rowNumber % 2 === 0) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                            if (c === 7) cell.numFmt = '0.0%';
+                        }
+                    }
+                });
+
+                const statusImg = await getChartImage('statusChart');
+                if (statusImg) {
+                    addChartToSheet(wsDash, statusImg, 'B26', 'D39');
+                }
+
+                // Sheet 2: តាមរាជធានីខេត្ត
+                const wsProv = workbook.addWorksheet('តាមរាជធានីខេត្ត');
+                wsProv.views = [{ showGridLines: true }];
+                wsProv.addRow(['ល.រ', 'រាជធានី/ខេត្ត', 'ចំនួនក្រុមហ៊ុន/សហគ្រាស', 'ការចុះបញ្ជីថ្មី', 'ការចុះបញ្ជីបន្ត', 'សមាមាត្រ (%)']);
+                data.provinces.forEach((p, idx) => {
+                    wsProv.addRow([
+                        idx + 1,
+                        p.province,
+                        p.total,
+                        p.newCount,
+                        p.renewalCount,
+                        p.total / data.totals.companyCount
+                    ]);
+                });
+                formatTable(wsProv, 1, 6);
+                wsProv.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+                    if (rowNumber > 1) {
+                        row.getCell(6).numFmt = '0.0%';
+                    }
+                });
+                autofitWidths(wsProv, 6);
+
+                const provinceImg = await getChartImage('companyProvinceChart');
+                if (provinceImg) {
+                    addChartToSheet(wsProv, provinceImg, 'B16', 'I32');
+                }
+
+                // Sheet 3: បញ្ជីក្រុមហ៊ុន
+                const wsComp = workbook.addWorksheet('បញ្ជីក្រុមហ៊ុន');
+                wsComp.views = [{ showGridLines: true }];
+                wsComp.addRow([
+                    'ល.រ', 'លេខចុះបញ្ជី', 'ឈ្មោះក្រុមហ៊ុន/សហគ្រាស', 'រាជធានី/ខេត្ត', 'ថ្ងៃចុះបញ្ជី', 
+                    'ចំនួនមុខសញ្ញាសរុប', 'ឧបករណ៍មាត្រាសាស្ត្រ', 'ទំនិញវេចខ្ចប់', 
+                    'ប្រភេទសំណើថ្មី/បន្ត', 'ស្ថានភាព', 'ថ្ងៃអនុម័ត', 'ថ្ងៃដំណើរការ', 'យឺតចំនួនថ្ងៃ'
+                ]);
+
+                const todayDate = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+
+                data.companies.forEach((c, idx) => {
+                    let processDaysText = '-';
+                    let delayedDaysText = '-';
+                    if (c.regDateObj) {
+                        const completed = isCompletedStatus(c.rawStatus);
+                        let endDate = todayDate;
+                        let canCalc = true;
+                        if (completed) {
+                            if (!c.approvalDateObj || c.approvalDateObj < c.regDateObj) {
+                                canCalc = false;
+                            } else {
+                                endDate = c.approvalDateObj;
+                            }
+                        }
+                        if (canCalc) {
+                            const days = daysBetween(c.regDateObj, endDate);
+                            processDaysText = days !== null ? `${days} ថ្ងៃ` : '-';
+                            if (days !== null && days > SERVICE_MAX_DAYS) {
+                                delayedDaysText = `${days - SERVICE_MAX_DAYS} ថ្ងៃ`;
+                            } else {
+                                delayedDaysText = '០ ថ្ងៃ';
+                            }
+                        } else if (completed) {
+                            delayedDaysText = 'មិនអាចគណនា—គ្មានថ្ងៃអនុម័ត';
+                        }
+                    }
+
+                    wsComp.addRow([
+                        idx + 1,
+                        c.companyNo || '-',
+                        c.company,
+                        c.province,
+                        c.regDate || '-',
+                        c.totalItems,
+                        c.toolsCount,
+                        c.packagesCount,
+                        c.registrationType === 'new' ? 'ចុះបញ្ជីថ្មី' : 'ចុះបញ្ជីបន្ត',
+                        c.status,
+                        c.approvalDateObj ? formatDate(c.approvalDateObj) : '-',
+                        processDaysText,
+                        delayedDaysText
+                    ]);
+                });
+                formatTable(wsComp, 1, 13);
+                autofitWidths(wsComp, 13);
+
+                // Sheet 4: សង្ខេបឧបករណ៍
+                const wsTools = workbook.addWorksheet('សង្ខេបឧបករណ៍');
+                wsTools.views = [{ showGridLines: true }];
+                wsTools.addRow(['ល.រ', 'ឈ្មោះឧបករណ៍មាត្រាសាស្ត្រ', 'ចំនួនសរុប', 'ចំនួនក្រុមហ៊ុន', 'ប្រទេសផលិតដើម', 'ឆ្នាំផលិត', 'រាជធានី/ខេត្តដែលមានចំនួនខ្ពស់បំផុត']);
+                
+                const toolsList = Object.entries(data.toolsSummary).map(([name, x]) => {
+                    const top = Object.entries(x.provinces).sort((a,b) => b[1]-a[1])[0];
+                    const countries = [...x.originCountries].sort().join(', ') || '-';
+                    const years = [...x.manufactureYears].sort().join(', ') || '-';
+                    return { name, total: x.total, companies: x.companies.size, countries, years, topProvince: top ? `${top[0]} (${formatNumber(top[1])})` : '-' };
+                }).sort((a,b) => b.total-a.total);
+
+                toolsList.forEach((t, idx) => {
+                    wsTools.addRow([
+                        idx + 1,
+                        t.name,
+                        t.total,
+                        t.companies,
+                        t.countries,
+                        t.years,
+                        t.topProvince
+                    ]);
+                });
+                formatTable(wsTools, 1, 7);
+                autofitWidths(wsTools, 7);
+
+                // Sheet 5: សង្ខេបទំនិញវេចខ្ចប់
+                const wsPkgs = workbook.addWorksheet('សង្ខេបទំនិញវេចខ្ចប់');
+                wsPkgs.views = [{ showGridLines: true }];
+                wsPkgs.addRow(['ល.រ', 'ឈ្មោះទំនិញវេចខ្ចប់', 'ចំនួនសរុប', 'ចំនួនក្រុមហ៊ុន', 'ប្រទេសផលិតដើម', 'ឆ្នាំផលិត', 'រាជធានី/ខេត្តដែលមានចំនួនខ្ពស់បំផុត']);
+                
+                const pkgsList = Object.entries(data.packagesSummary).map(([name, x]) => {
+                    const top = Object.entries(x.provinces).sort((a,b) => b[1]-a[1])[0];
+                    const countries = [...x.originCountries].sort().join(', ') || '-';
+                    const years = [...x.manufactureYears].sort().join(', ') || '-';
+                    return { name, total: x.total, companies: x.companies.size, countries, years, topProvince: top ? `${top[0]} (${formatNumber(top[1])})` : '-' };
+                }).sort((a,b) => b.total-a.total);
+
+                pkgsList.forEach((t, idx) => {
+                    wsPkgs.addRow([
+                        idx + 1,
+                        t.name,
+                        t.total,
+                        t.companies,
+                        t.countries,
+                        t.years,
+                        t.topProvince
+                    ]);
+                });
+                formatTable(wsPkgs, 1, 7);
+                autofitWidths(wsPkgs, 7);
+
+                // Sheet 6: ឯកសារយឺត
+                const wsDelay = workbook.addWorksheet('ឯកសារយឺត');
+                wsDelay.views = [{ showGridLines: true }];
+                wsDelay.addRow(['ល.រ', 'ឈ្មោះក្រុមហ៊ុន/សហគ្រាស', 'រាជធានី/ខេត្ត', 'ថ្ងៃចុះបញ្ជី', 'ថ្ងៃអនុម័ត ឬថ្ងៃគណនា', 'ថ្ងៃដំណើរការ', 'យឺតចំនួនថ្ងៃ', 'ស្ថានភាព', 'យឺតនៅអ្នកណា']);
+
+                data.delayedDocuments.forEach((d, idx) => {
+                    const compRec = data.companies.find(c => c.company === d.company);
+                    const completed = compRec ? isCompletedStatus(compRec.rawStatus) : false;
+                    let targetDateText = '-';
+                    if (compRec) {
+                        targetDateText = completed ? (compRec.approvalDateObj ? formatDate(compRec.approvalDateObj) : 'គ្មានថ្ងៃអនុម័ត') : formatDate(todayDate);
+                    }
+                    wsDelay.addRow([
+                        idx + 1,
+                        d.company,
+                        d.province,
+                        d.regDate,
+                        targetDateText,
+                        `${d.processDays} ថ្ងៃ`,
+                        `${d.delayedDays} ថ្ងៃ`,
+                        d.status,
+                        d.owner
+                    ]);
+                });
+                formatTable(wsDelay, 1, 9);
+                autofitWidths(wsDelay, 9);
+
+                // Sheet 7: ទិន្នន័យដើម
+                const wsRaw = workbook.addWorksheet('ទិន្នន័យដើម');
+                wsRaw.views = [{ showGridLines: true }];
+                if (data.sourceRows.length > 0) {
+                    const headers = Object.keys(data.sourceRows[0]);
+                    wsRaw.addRow(headers);
+                    data.sourceRows.forEach(row => {
+                        wsRaw.addRow(headers.map(h => row[h] ?? ''));
+                    });
+                    const r = wsRaw.getRow(1);
+                    r.height = 25;
+                    headers.forEach((_, cIdx) => {
+                        const cell = r.getCell(cIdx + 1);
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+                        cell.font = { name: fontName, size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    });
+                    wsRaw.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+                        row.eachCell({ includeEmpty: true }, cell => {
+                            cell.font = { name: fontName, size: 9 };
+                            cell.border = thinBorder;
+                        });
+                    });
+                    autofitWidths(wsRaw, headers.length);
+                }
+
+                // Sheet 8: កំណត់សម្គាល់
+                const wsNotes = workbook.addWorksheet('កំណត់សម្គាល់');
+                wsNotes.views = [{ showGridLines: true }];
+                wsNotes.addRow(['ចំណុច', 'សេចក្តីពន្យល់']);
+                wsNotes.addRow(['វិធីរាប់ក្រុមហ៊ុន/សហគ្រាស', 'រាល់ជួរដែល «ល.រ មុខសញ្ញា = ១» ត្រូវរាប់ជាក្រុមហ៊ុន/សហគ្រាស ១។']);
+                wsNotes.addRow(['ចំនួនក្រុមហ៊ុន/សហគ្រាសសរុប', data.totals.companyCount]);
+                wsNotes.addRow(['មុខសញ្ញាសរុប', data.totals.total]);
+                wsNotes.addRow(['ឧបករណ៍មាត្រាសាស្ត្រ', data.totals.toolsCount]);
+                wsNotes.addRow(['ទំនិញវេចខ្ចប់', data.totals.packageCount]);
+                wsNotes.addRow(['គណនាយឺត', 'គណនាតាមសំណុំឯកសារក្រុមហ៊ុន (ល.រ មុខសញ្ញា = ១)។ រយៈពេលលើស ៧ថ្ងៃ គិតចាប់ពីថ្ងៃចុះបញ្ជី។']);
+                wsNotes.addRow(['កាលបរិច្ឆេទបង្កើតរបាយការណ៍', formatDate(todayDate)]);
+
+                formatTable(wsNotes, 1, 2);
+                autofitWidths(wsNotes, 2);
+
+                // Build filename
+                let reportMonth = '';
+                let reportYear = '';
+                const firstWithDate = data.companies.find(c => c.regDateObj);
+                if (firstWithDate) {
+                    reportMonth = monthNamesKh[firstWithDate.regDateObj.getMonth()];
+                    reportYear = toKhmerDigits(firstWithDate.regDateObj.getFullYear());
+                } else {
+                    const today = new Date();
+                    reportMonth = monthNamesKh[today.getMonth()];
+                    reportYear = toKhmerDigits(today.getFullYear());
+                }
+                const filename = `របាយការណ៍សង្ខេបចុះបញ្ជីមាត្រាសាស្ត្រ_${reportMonth}_${reportYear}.xlsx`;
+
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error(err);
+                alert('មានបញ្ហាក្នុងការបង្កើត Excel: ' + err.message);
             } finally {
                 cleanupExportMode(button);
             }
@@ -570,6 +1465,55 @@ img { max-width: 100%; height: auto; }
                 setUploadStatus(`មានបញ្ហាក្នុងការរៀបចំ template: ${error.message || error}`, true);
             }
             setupExportButtons();
+
+            // Mobile menu drawer toggle
+            const menuBtn = document.getElementById('menuBtn');
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (menuBtn && sidebar && backdrop) {
+                const toggleSidebar = () => {
+                    sidebar.classList.toggle('-translate-x-full');
+                    backdrop.classList.toggle('hidden');
+                };
+                menuBtn.addEventListener('click', toggleSidebar);
+                backdrop.addEventListener('click', toggleSidebar);
+
+                // Close drawer when sidebar menu items are clicked
+                sidebar.querySelectorAll('nav a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        sidebar.classList.add('-translate-x-full');
+                        backdrop.classList.add('hidden');
+                        
+                        // Set active styling
+                        sidebar.querySelectorAll('nav a').forEach(a => {
+                            a.className = 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all';
+                        });
+                        // Highlight clicked
+                        link.className = 'flex items-center gap-3 rounded-lg bg-blue-600/10 border border-blue-500/20 px-3 py-2.5 text-xs font-bold text-white transition-all';
+                    });
+                });
+            }
+
+            // Drag and drop upload zone support
+            const fileInput = document.getElementById('csvFileInput');
+            const dropZone = fileInput ? fileInput.parentElement : null;
+            if (dropZone && fileInput) {
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-blue-500', 'bg-blue-50/50');
+                });
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+                });
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+                    if (e.dataTransfer.files.length) {
+                        fileInput.files = e.dataTransfer.files;
+                        fileInput.dispatchEvent(new Event('change'));
+                    }
+                });
+            }
         });
 
         document.getElementById('csvFileInput').addEventListener('change', function(e) {
@@ -781,17 +1725,43 @@ img { max-width: 100%; height: auto; }
             if (!tbody) { console.warn('companiesSummaryBody element was not found; company detail table was skipped.'); return; }
             tbody.innerHTML = '';
             if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-gray-500">មិនមានទិន្នន័យ</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="px-3 py-4 text-center text-slate-400">មិនមានទិន្នន័យ</td></tr>';
                 return;
             }
             rows.forEach((x, i) => {
                 const tr = document.createElement('tr');
-                tr.className = i % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-                let badge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">${x.status}</span>`;
-                if (x.status === 'អនុម័តរួច') badge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">${x.status}</span>`;
-                else if (x.status.includes('រង់ចាំ') || x.status.includes('ពិនិត្យ')) badge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-orange-100 text-orange-800">${x.status}</span>`;
-                else if (x.status.includes('ត្រឡប់')) badge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800">${x.status}</span>`;
-                tr.innerHTML = `<td class="px-4 py-2 border-b">${i+1}</td><td class="px-4 py-2 border-b font-medium text-gray-900">${x.company}</td><td class="px-4 py-2 border-b">${x.province}</td><td class="px-4 py-2 border-b text-center font-bold">${formatNumber(x.totalItems)}</td><td class="px-4 py-2 border-b text-center">${formatNumber(x.toolsCount)}</td><td class="px-4 py-2 border-b text-center">${formatNumber(x.packagesCount)}</td><td class="px-4 py-2 border-b">${x.regDate}</td><td class="px-4 py-2 border-b text-center">${badge}</td>`;
+                tr.className = i % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/50 hover:bg-slate-50';
+                
+                let badge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">${x.status}</span>`;
+                if (x.status === 'អនុម័តរួច') {
+                    badge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">អនុម័តរួច</span>`;
+                } else if (x.status.includes('រង់ចាំ') || x.status.includes('ពិនិត្យ')) {
+                    badge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700">${x.status}</span>`;
+                } else if (x.status.includes('ត្រឡប់')) {
+                    badge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">${x.status}</span>`;
+                }
+
+                const actions = `
+                    <div class="flex items-center justify-center gap-2">
+                        <button onclick="alert('ក្រុមហ៊ុន៖ ${x.company}\\nលេខចុះបញ្ជី៖ ${x.companyNo}\\nស្ថានភាព៖ ${x.status}')" class="p-1 text-blue-600 hover:bg-blue-50 rounded" title="មើលព័ត៌មាន">👁️</button>
+                        <button onclick="alert('កែសម្រួលព័ត៌មាន (ទាមទារសិទ្ធិជា Admin)')" class="p-1 text-slate-600 hover:bg-slate-50 rounded" title="កែសម្រួល">✏️</button>
+                        <button onclick="document.getElementById('downloadWordBtn').click()" class="p-1 text-emerald-600 hover:bg-emerald-50 rounded" title="ទាញយករបាយការណ៍ Word">📄</button>
+                    </div>
+                `;
+
+                tr.innerHTML = `
+                    <td class="px-3 py-2 text-center text-slate-400 font-medium">${i+1}</td>
+                    <td class="px-3 py-2 font-bold text-slate-800 max-w-xs truncate" title="${x.company}">${x.company}</td>
+                    <td class="px-3 py-2 text-slate-500 font-mono font-medium">${x.companyNo}</td>
+                    <td class="px-3 py-2 text-slate-600">${x.province}</td>
+                    <td class="px-3 py-2 text-slate-500 font-medium">${x.regDate}</td>
+                    <td class="px-3 py-2 text-center">
+                        <span class="font-bold text-slate-800" title="ឧបករណ៍៖ ${x.toolsCount}, ទំនិញ៖ ${x.packagesCount}">${x.totalItems}</span>
+                        <span class="text-[9px] text-slate-400 font-medium block">(ឧបករណ៍ ${x.toolsCount}, ទំនិញ ${x.packagesCount})</span>
+                    </td>
+                    <td class="px-3 py-2 text-center">${badge}</td>
+                    <td class="px-3 py-2 text-center">${actions}</td>
+                `;
                 tbody.appendChild(tr);
             });
         }
@@ -1038,6 +2008,39 @@ img { max-width: 100%; height: auto; }
             renderProvinceCompanyCountTable(provinceCompanyRows);
             renderDelayTable(delays);
             renderCharts(monthLabels, monthlyData, statuses, provinces, companyProvinceCounts);
+
+            // Enable download buttons if data is present
+            const wordBtn = document.getElementById('downloadWordBtn');
+            const excelBtn = document.getElementById('downloadExcelBtn');
+            const qWordBtn = document.getElementById('quickWordBtn');
+            const qExcelBtn = document.getElementById('quickExcelBtn');
+            const hasData = !!(data && data.length);
+            if (wordBtn) wordBtn.disabled = !hasData;
+            if (excelBtn) excelBtn.disabled = !hasData;
+            if (qWordBtn) qWordBtn.disabled = !hasData;
+            if (qExcelBtn) qExcelBtn.disabled = !hasData;
+
+            // Populate normalized reportData
+            window.reportData = {
+                period: periodEl ? periodEl.innerText : '',
+                totals: {
+                    total,
+                    toolsCount,
+                    packageCount,
+                    pendingCount,
+                    companyCount,
+                    approvedCompanyCount
+                },
+                companies: companyRows,
+                provinces: provinceCompanyRows,
+                statuses: statuses,
+                toolsSummary: tools,
+                packagesSummary: packages,
+                delayedDocuments: delays,
+                sourceRows: data,
+                monthLabels: monthLabels,
+                monthlyData: monthlyData
+            };
         }
         function renderDelayTable(delays) {
             const tbody = document.getElementById('delayTableBody'), summary = document.getElementById('delaySummary');
