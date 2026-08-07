@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js for Graphics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <!-- PapaParse for parsing CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <!-- SheetJS for parsing Excel XLSX/XLS files -->
@@ -50,91 +51,110 @@
             top: 0;
             z-index: 1;
         }
+        /* Sidebar Collapsed Styles */
+        #sidebar.sidebar-collapsed {
+            width: 4.25rem !important; /* 68px */
+        }
+        #sidebar.sidebar-collapsed .sidebar-text,
+        #sidebar.sidebar-collapsed .sidebar-brand-text {
+            display: none !important;
+        }
+        #sidebar.sidebar-collapsed .nav-item {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        #sidebar.sidebar-collapsed #toggleIcon {
+            transform: rotate(180deg);
+        }
+        /* Glassmorphism card enhancements */
+        .glass-card {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        /* Gradient backgrounds */
+        .gradient-blue { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
+        .gradient-emerald { background: linear-gradient(135deg, #065f46 0%, #10b981 100%); }
+        .gradient-violet { background: linear-gradient(135deg, #5b21b6 0%, #8b5cf6 100%); }
+        .gradient-amber { background: linear-gradient(135deg, #92400e 0%, #f59e0b 100%); }
+        .gradient-rose { background: linear-gradient(135deg, #9f1239 0%, #f43f5e 100%); }
+        .gradient-cyan { background: linear-gradient(135deg, #155e75 0%, #06b6d4 100%); }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans antialiased overflow-hidden">
     <!-- Main Flex Shell -->
     <div class="flex h-screen w-screen overflow-hidden">
         
-        <!-- Left Sidebar (Desktop: visible, Tablet/Mobile: drawer) -->
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-20 flex w-64 flex-col bg-slate-900 text-slate-400 border-r border-slate-800 transition-transform duration-300 -translate-x-full md:translate-x-0 md:static md:z-auto">
+        <!-- Left Sidebar — Responsive & Collapsible -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-20 flex w-52 flex-col bg-slate-900 text-slate-400 border-r border-slate-800 transition-all duration-300 -translate-x-full md:translate-x-0 md:static md:z-auto flex-shrink-0">
             <!-- Sidebar Brand Header -->
-            <div class="flex h-16 items-center gap-3 border-b border-slate-800 px-4 bg-slate-950 flex-shrink-0">
-                <!-- National Emblem Badge / Icon -->
-                <div class="h-9 w-9 rounded-lg bg-blue-600/10 flex items-center justify-center border border-blue-500/20 text-blue-500 flex-shrink-0">
-                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2L2 22h20L12 2zm0 3.8L19.2 20H4.8L12 5.8z"/>
+            <div class="flex h-14 items-center justify-between border-b border-slate-800/80 px-3 flex-shrink-0 bg-slate-950/60">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-md shadow-blue-500/20 flex-shrink-0">
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 22h20L12 2zm0 3.8L19.2 20H4.8L12 5.8z"/>
+                        </svg>
+                    </div>
+                    <div class="sidebar-brand-text overflow-hidden">
+                        <h1 class="font-moul text-[10px] text-white truncate leading-tight">មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ</h1>
+                        <p class="text-[8.5px] text-slate-400 truncate leading-tight mt-0.5">នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</p>
+                    </div>
+                </div>
+                <!-- Collapse/Expand Toggle Button -->
+                <button id="sidebarToggleBtn" title="ពង្រីក/បង្រួម Sidebar" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition flex-shrink-0">
+                    <svg id="toggleIcon" class="h-4 w-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
                     </svg>
-                </div>
-                <div class="overflow-hidden">
-                    <h1 class="font-moul text-[10px] text-white truncate leading-tight">មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ</h1>
-                    <p class="text-[9px] text-slate-500 truncate leading-tight mt-0.5">នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</p>
-                </div>
+                </button>
             </div>
 
             <!-- Navigation Links -->
-            <nav class="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-                <a href="#" class="flex items-center gap-3 rounded-lg bg-blue-600/10 border border-blue-500/20 px-3 py-2.5 text-xs font-bold text-white transition-all">
-                    <!-- Home/Dashboard Icon -->
-                    <svg class="h-4.5 w-4.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"/></svg>
-                    <span>Dashboard</span>
+            <nav class="flex-1 space-y-1 p-2 overflow-y-auto">
+                <a href="#" title="Dashboard" class="nav-item flex items-center gap-3 rounded-xl bg-blue-600/20 border border-blue-500/30 px-3 py-2.5 text-xs font-bold text-white transition-all hover:bg-blue-600/30">
+                    <svg class="h-4.5 w-4.5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"/></svg>
+                    <span class="sidebar-text truncate">Dashboard</span>
                 </a>
-                <a href="#tableSection" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                    <!-- Document Icon -->
-                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    <span>ការចុះបញ្ជីមាត្រាសាស្ត្រ</span>
+                <a href="#tableSection" title="ការចុះបញ្ជីមាត្រាសាស្ត្រ" class="nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <svg class="h-4.5 w-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="sidebar-text truncate">ការចុះបញ្ជីមាត្រាសាស្ត្រ</span>
                 </a>
-                <a href="#recentCompaniesCard" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                    <!-- Office Icon -->
-                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                    <span>ក្រុមហ៊ុន/សហគ្រាស</span>
+                <a href="#recentCompaniesCard" title="ក្រុមហ៊ុន/សហគ្រាស" class="nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <svg class="h-4.5 w-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    <span class="sidebar-text truncate">ក្រុមហ៊ុន/សហគ្រាស</span>
                 </a>
-                <a href="#toolsTableCard" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                    <!-- Gauge Icon -->
-                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    <span>ឧបករណ៍មាត្រាសាស្ត្រ</span>
+                <a href="#toolsTableCard" title="ឧបករណ៍មាត្រាសាស្ត្រ" class="nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <svg class="h-4.5 w-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <span class="sidebar-text truncate">ឧបករណ៍មាត្រាសាស្ត្រ</span>
                 </a>
-                <a href="#packagesTableCard" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                    <!-- Box/Pack Icon -->
-                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-18v10l-8-4m0 0v10l8 4"/></svg>
-                    <span>ទំនិញវេចខ្ចប់</span>
+                <a href="#packagesTableCard" title="ទំនិញវេចខ្ចប់" class="nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <svg class="h-4.5 w-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-18v10l-8-4m0 0v10l8 4"/></svg>
+                    <span class="sidebar-text truncate">ទំនិញវេចខ្ចប់</span>
                 </a>
-                <a href="#delayTableCard" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                    <!-- Delay Icon -->
-                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    <span>ឯកសារយឺត</span>
+                <a href="#delayTableCard" title="ឯកសារយឺត" class="nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <svg class="h-4.5 w-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <span class="sidebar-text truncate">ឯកសារយឺត</span>
                 </a>
-                <a href="#downloadWordBtn" onclick="downloadWordReport(); return false;" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                    <!-- Report Icon -->
-                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    <span>ទាញយក Word</span>
+
+                <div class="w-full h-px bg-slate-800/80 my-2"></div>
+
+                <a href="#downloadWordBtn" onclick="downloadWordReport(); return false;" title="ទាញយក Word Report" class="nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-blue-600/20 hover:text-blue-400 transition-all">
+                    <svg class="h-4.5 w-4.5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="sidebar-text truncate">ទាញយក Word</span>
                 </a>
-                <a href="#downloadExcelBtn" onclick="downloadExcelReport(); return false;" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                    <!-- Sheet Icon -->
-                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    <span>ទាញយក Excel</span>
-                </a>
-                <a href="#" onclick="alert('មុខងារនេះនឹងត្រូវបានអភិវឌ្ឍបន្ថែមក្នុងពេលឆាប់ៗខាងមុខ។'); return false;" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                    <!-- Settings Icon -->
-                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    <span>Settings</span>
+                <a href="#downloadExcelBtn" onclick="downloadExcelReport(); return false;" title="ទាញយក Excel Report" class="nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-emerald-600/20 hover:text-emerald-400 transition-all">
+                    <svg class="h-4.5 w-4.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="sidebar-text truncate">ទាញយក Excel</span>
                 </a>
             </nav>
 
-            <!-- Sidebar Contacts Footer -->
-            <div class="border-t border-slate-800 p-4 space-y-2 text-[10px] text-slate-500 font-medium flex-shrink-0 bg-slate-950">
-                <p class="font-bold text-slate-400 uppercase tracking-wider text-[9px]">ទំនាក់ទំនងគាំទ្រ</p>
-                <div class="space-y-1 text-slate-500">
-                    <p class="flex items-center gap-1.5">
-                        <span>📞</span>
-                        <a href="tel:023426110" class="hover:text-blue-400">023 426 110</a>
-                    </p>
-                    <p class="flex items-center gap-1.5">
-                        <span>✉</span>
-                        <a href="mailto:info@dim.gov.kh" class="hover:text-blue-400">info@dim.gov.kh</a>
-                    </p>
-                </div>
-                <div class="pt-2 border-t border-slate-800 flex justify-between text-[9px] text-slate-600">
+            <!-- Sidebar Bottom -->
+            <div class="border-t border-slate-800/60 p-2.5 text-[10px] text-slate-400 font-medium flex-shrink-0 bg-slate-950/40">
+                <a href="#" onclick="alert('មុខងារនេះនឹងត្រូវបានអភិវឌ្ឍបន្ថែមក្នុងពេលឆាប់ៗខាងមុខ។'); return false;" title="Settings" class="nav-item flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-all">
+                    <svg class="h-4.5 w-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span class="sidebar-text truncate">Settings</span>
+                </a>
+                <div class="sidebar-text pt-2 mt-1 border-t border-slate-800/40 flex justify-between text-[9px] text-slate-500">
                     <span>ប្រព័ន្ធវិភាគ</span>
                     <span>v1.0.0</span>
                 </div>
@@ -148,7 +168,7 @@
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
             
             <!-- Main Header Bar -->
-            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 flex-shrink-0 z-10">
+            <header class="h-14 bg-white border-b border-slate-200/80 flex items-center justify-between px-5 flex-shrink-0 z-10 shadow-sm">
                 <!-- Left Organization Title -->
                 <div class="flex items-center gap-3">
                     <button id="menuBtn" class="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg md:hidden transition">
@@ -156,35 +176,40 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
-                    <div class="hidden sm:block">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">ក្រសួងឧស្សាហកម្ម វិទ្យាសាស្ត្រ បច្ចេកវិទ្យា និងនវានុវត្តន៍</p>
-                        <h2 class="text-xs font-bold text-slate-800 mt-1 leading-none">មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ &bull; នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</h2>
+                    <div class="hidden sm:flex items-center gap-3">
+                        <div class="h-8 w-8 rounded-lg gradient-blue flex items-center justify-center text-white shadow-sm shadow-blue-500/20 flex-shrink-0">
+                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8L19.2 20H4.8L12 5.8z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">ក្រសួងឧស្សាហកម្ម វិទ្យាសាស្ត្រ បច្ចេកវិទ្យា និងនវានុវត្តន៍</p>
+                            <h2 class="text-[11px] font-bold text-slate-800 mt-0.5 leading-none">មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ &bull; នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</h2>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Right profile & tools metadata -->
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3">
                     <!-- Notifications Trigger -->
-                    <button class="relative p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition">
+                    <button class="relative p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                         </svg>
-                        <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+                        <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
                     </button>
 
                     <!-- Language Switcher Selector -->
-                    <div class="flex items-center gap-1.5 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 text-xs font-bold text-slate-700">
+                    <div class="flex items-center gap-1.5 border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 text-xs font-bold text-slate-700">
                         <span>🇰🇭</span>
                         <span class="hidden sm:inline">ខ្មែរ</span>
                     </div>
 
                     <!-- User Profile Dropdown -->
-                    <div class="flex items-center gap-2.5 border-l border-slate-200 pl-4">
-                        <div class="h-8 w-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                    <div class="flex items-center gap-2.5 border-l border-slate-200 pl-3">
+                        <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm shadow-blue-500/20">
                             ADM
                         </div>
                         <div class="hidden lg:block text-left">
-                            <p class="text-xs font-bold text-slate-800 leading-tight">អ្នកគ្រប់គ្រងប្រព័ន្ធ</p>
+                            <p class="text-[11px] font-bold text-slate-800 leading-tight">អ្នកគ្រប់គ្រងប្រព័ន្ធ</p>
                             <p class="text-[9px] text-slate-400 font-bold leading-tight">មន្ត្រីជាន់ខ្ពស់វិភាគ</p>
                         </div>
                     </div>
@@ -192,48 +217,53 @@
             </header>
 
             <!-- Dashboard Content Container (Scrollable) -->
-            <main class="flex-1 overflow-y-auto p-6 space-y-6">
+            <main class="flex-1 overflow-y-auto p-5 space-y-5">
                 
                 <!-- Main Dashboard Header & Upload Card -->
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                    <!-- Left: Title Banner -->
-                    <div class="xl:col-span-2 bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <h1 class="font-moul text-lg text-slate-900">Dashboard ចុះបញ្ជីមាត្រាសាស្ត្រ</h1>
-                            <p class="text-xs text-slate-500 mt-1.5 font-medium leading-relaxed">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+                    <!-- Left: Title Banner with gradient -->
+                    <div class="xl:col-span-2 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 border border-slate-700/30 rounded-2xl p-6 shadow-xl shadow-blue-900/10 flex flex-col justify-between relative overflow-hidden">
+                        <!-- Decorative circles -->
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/4 blur-xl"></div>
+                        <div class="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full translate-y-1/2 -translate-x-1/4 blur-xl"></div>
+                        <div class="relative">
+                            <h1 class="font-moul text-lg text-white">Dashboard ចុះបញ្ជីមាត្រាសាស្ត្រ</h1>
+                            <p class="text-xs text-blue-200/80 mt-1.5 font-medium leading-relaxed">
                                 ប្រព័ន្ធតាមដាន វិភាគ និងបូកសរុបទិន្នន័យចុះបញ្ជីឧបករណ៍មាត្រាសាស្ត្រ និងទំនិញវេចខ្ចប់ថ្នាក់ជាតិ។ 
                                 សម្របសម្រួលដោយ នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម។
                             </p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-3 mt-6 pt-4 border-t border-slate-100">
+                        <div class="flex flex-wrap items-center gap-3 mt-5 pt-4 border-t border-white/10 relative">
                             <!-- Filters (Month / Year placeholders) -->
-                            <select class="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <select class="text-xs border border-white/20 rounded-lg px-3 py-2 bg-white/10 font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-400 backdrop-blur-sm">
                                 <option>ទិន្នន័យគ្រប់ខែ</option>
                                 <option>ឧសភា</option>
                                 <option>មិថុនា</option>
                                 <option>កក្កដា</option>
                             </select>
-                            <select class="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <select class="text-xs border border-white/20 rounded-lg px-3 py-2 bg-white/10 font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-400 backdrop-blur-sm">
                                 <option>២០២៦</option>
                                 <option>២០២៥</option>
                             </select>
-                            <button type="button" class="bg-slate-900 text-white font-bold text-xs px-3.5 py-2 rounded-lg hover:bg-slate-800 transition">
+                            <button type="button" class="bg-blue-500 hover:bg-blue-400 text-white font-bold text-xs px-4 py-2 rounded-lg transition shadow-sm shadow-blue-500/30">
                                 ស្វែងរក
                             </button>
                         </div>
                     </div>
 
                     <!-- Right: Drag and Drop Upload Card -->
-                    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
+                    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
                         <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" class="hidden">
-                        <div class="border-2 border-dashed border-slate-200 rounded-lg p-5 text-center bg-slate-50/50 hover:bg-slate-50 transition cursor-pointer relative" onclick="document.getElementById('csvFileInput').click()">
+                        <div class="border-2 border-dashed border-blue-200 rounded-xl p-5 text-center bg-blue-50/30 hover:bg-blue-50/60 hover:border-blue-300 transition-all cursor-pointer relative" onclick="document.getElementById('csvFileInput').click()">
                             <div class="flex flex-col items-center gap-2">
-                                <span class="text-3xl">📥</span>
+                                <div class="h-10 w-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                                </div>
                                 <span class="text-xs font-bold text-slate-800">នាំចូលទិន្នន័យ Excel/CSV</span>
                                 <span class="text-[10px] text-slate-400">អូសឯកសារមកទីនេះ ឬចុចដើម្បីជ្រើសរើសឯកសារ</span>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between text-[10px] text-slate-400 font-bold mt-4 pt-2">
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 font-bold mt-3 pt-2">
                             <span>ស្ថានភាព Upload៖</span>
                             <span id="uploadStatus" class="text-blue-600">រង់ចាំឯកសារ...</span>
                         </div>
@@ -243,86 +273,86 @@
                 <!-- 6 KPI Responsive Cards Row -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                     <!-- KPI Card 1: Total Registered Items -->
-                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
-                        <div class="p-3 rounded-lg bg-slate-50 text-slate-500 flex-shrink-0">
+                    <div class="gradient-blue rounded-xl p-4 shadow-lg shadow-blue-500/10 flex items-center gap-3.5">
+                        <div class="p-2.5 rounded-lg bg-white/15 text-white flex-shrink-0 backdrop-blur-sm">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">ឧបករណ៍ចុះបញ្ជីសរុប</p>
-                            <h3 class="text-xl font-bold text-slate-900 mt-0.5" id="kpi-total">0</h3>
-                            <p class="text-[9px] text-slate-400 truncate mt-0.5">ឧបករណ៍ &amp; ទំនិញ</p>
+                            <p class="text-[9px] text-blue-200 font-bold uppercase tracking-wider truncate">ឧបករណ៍ចុះបញ្ជីសរុប</p>
+                            <h3 class="text-xl font-bold text-white mt-0.5" id="kpi-total">0</h3>
+                            <p class="text-[9px] text-blue-200/70 truncate mt-0.5">ឧបករណ៍ &amp; ទំនិញ</p>
                         </div>
                     </div>
 
                     <!-- KPI Card 2: Metrology Instruments -->
-                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
-                        <div class="p-3 rounded-lg bg-emerald-50 text-emerald-600 flex-shrink-0">
+                    <div class="gradient-emerald rounded-xl p-4 shadow-lg shadow-emerald-500/10 flex items-center gap-3.5">
+                        <div class="p-2.5 rounded-lg bg-white/15 text-white flex-shrink-0 backdrop-blur-sm">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"/>
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">ឧបករណ៍មាត្រាសាស្ត្រ</p>
-                            <h3 class="text-xl font-bold text-emerald-600 mt-0.5" id="kpi-tools">0</h3>
-                            <p class="text-[9px] text-slate-400 truncate mt-0.5">ឧបករណ៍វាស់វែង</p>
+                            <p class="text-[9px] text-emerald-200 font-bold uppercase tracking-wider truncate">ឧបករណ៍មាត្រាសាស្ត្រ</p>
+                            <h3 class="text-xl font-bold text-white mt-0.5" id="kpi-tools">0</h3>
+                            <p class="text-[9px] text-emerald-200/70 truncate mt-0.5">ឧបករណ៍វាស់វែង</p>
                         </div>
                     </div>
 
                     <!-- KPI Card 3: Packaged Goods -->
-                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
-                        <div class="p-3 rounded-lg bg-purple-50 text-purple-600 flex-shrink-0">
+                    <div class="gradient-violet rounded-xl p-4 shadow-lg shadow-violet-500/10 flex items-center gap-3.5">
+                        <div class="p-2.5 rounded-lg bg-white/15 text-white flex-shrink-0 backdrop-blur-sm">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-18v10l-8-4m0 0v10l8 4"/>
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">ទំនិញវេចខ្ចប់</p>
-                            <h3 class="text-xl font-bold text-purple-600 mt-0.5" id="kpi-packages">0</h3>
-                            <p class="text-[9px] text-slate-400 truncate mt-0.5">ទំនិញបិទស្លាក</p>
+                            <p class="text-[9px] text-violet-200 font-bold uppercase tracking-wider truncate">ទំនិញវេចខ្ចប់</p>
+                            <h3 class="text-xl font-bold text-white mt-0.5" id="kpi-packages">0</h3>
+                            <p class="text-[9px] text-violet-200/70 truncate mt-0.5">ទំនិញបិទស្លាក</p>
                         </div>
                     </div>
 
                     <!-- KPI Card 4: Pending Approvals -->
-                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
-                        <div class="p-3 rounded-lg bg-orange-50 text-orange-600 flex-shrink-0">
+                    <div class="gradient-amber rounded-xl p-4 shadow-lg shadow-amber-500/10 flex items-center gap-3.5">
+                        <div class="p-2.5 rounded-lg bg-white/15 text-white flex-shrink-0 backdrop-blur-sm">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">កំពុងរង់ចាំអនុម័ត</p>
-                            <h3 class="text-xl font-bold text-orange-600 mt-0.5" id="kpi-pending">0</h3>
-                            <p class="text-[9px] text-slate-400 truncate mt-0.5">សំណុំឯកសារកំពុងរត់</p>
+                            <p class="text-[9px] text-amber-200 font-bold uppercase tracking-wider truncate">កំពុងរង់ចាំអនុម័ត</p>
+                            <h3 class="text-xl font-bold text-white mt-0.5" id="kpi-pending">0</h3>
+                            <p class="text-[9px] text-amber-200/70 truncate mt-0.5">សំណុំឯកសារកំពុងរត់</p>
                         </div>
                     </div>
 
                     <!-- KPI Card 5: Total Companies Submitted -->
-                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
-                        <div class="p-3 rounded-lg bg-cyan-50 text-cyan-600 flex-shrink-0">
+                    <div class="gradient-cyan rounded-xl p-4 shadow-lg shadow-cyan-500/10 flex items-center gap-3.5">
+                        <div class="p-2.5 rounded-lg bg-white/15 text-white flex-shrink-0 backdrop-blur-sm">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">ក្រុមហ៊ុនដាក់ស្នើសរុប</p>
-                            <h3 class="text-xl font-bold text-cyan-600 mt-0.5" id="kpi-companies">0</h3>
-                            <p class="text-[9px] text-slate-400 truncate mt-0.5">ល.រ មុខសញ្ញា = ១</p>
+                            <p class="text-[9px] text-cyan-200 font-bold uppercase tracking-wider truncate">ក្រុមហ៊ុនដាក់ស្នើសរុប</p>
+                            <h3 class="text-xl font-bold text-white mt-0.5" id="kpi-companies">0</h3>
+                            <p class="text-[9px] text-cyan-200/70 truncate mt-0.5">ល.រ មុខសញ្ញា = ១</p>
                         </div>
                     </div>
 
                     <!-- KPI Card 6: Approved Companies -->
-                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-4">
-                        <div class="p-3 rounded-lg bg-emerald-50 text-emerald-700 flex-shrink-0">
+                    <div class="gradient-rose rounded-xl p-4 shadow-lg shadow-rose-500/10 flex items-center gap-3.5">
+                        <div class="p-2.5 rounded-lg bg-white/15 text-white flex-shrink-0 backdrop-blur-sm">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">ក្រុមហ៊ុនអនុម័តរួច</p>
-                            <h3 class="text-xl font-bold text-emerald-700 mt-0.5" id="kpi-approved-companies">0</h3>
-                            <p class="text-[9px] text-slate-400 truncate mt-0.5">ស្ថានភាព COMPLETED</p>
+                            <p class="text-[9px] text-rose-200 font-bold uppercase tracking-wider truncate">ក្រុមហ៊ុនអនុម័តរួច</p>
+                            <h3 class="text-xl font-bold text-white mt-0.5" id="kpi-approved-companies">0</h3>
+                            <p class="text-[9px] text-rose-200/70 truncate mt-0.5">ស្ថានភាព COMPLETED</p>
                         </div>
                     </div>
                 </div>
@@ -562,9 +592,9 @@
             </main>
 
             <!-- Footer Section -->
-            <footer class="h-10 bg-white border-t border-slate-200 flex items-center justify-between px-6 text-[9px] text-slate-400 font-bold flex-shrink-0">
+            <footer class="h-9 bg-white border-t border-slate-200/80 flex items-center justify-between px-5 text-[9px] text-slate-400 font-bold flex-shrink-0">
                 <span>រក្សាសិទ្ធិ &copy; ២០២៦ មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ &bull; នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</span>
-                <span>v1.0.0</span>
+                <span class="text-slate-300">v1.0.0</span>
             </footer>
         </div>
     </div>
@@ -1529,9 +1559,67 @@
                     }
                 });
 
-                const statusImg = await getChartImage('statusChart');
-                if (statusImg) {
-                    addChartToSheet(wsDash, statusImg, 'B26', 'D39');
+                // --- Editable Chart Data Tables (replacing static images) ---
+                // Monthly Registration Data Table
+                const monthlyStartRow = rIndex + 2;
+                wsDash.getCell(`B${monthlyStartRow}`).value = 'តារាងទិន្នន័យចំនួនក្រុមហ៊ុនចុះបញ្ជីប្រចាំខែ (សម្រាប់បង្កើតក្រាហ្វិក)៖';
+                wsDash.getCell(`B${monthlyStartRow}`).font = { name: fontName, size: 10, bold: true, color: { argb: 'FF1E3A8A' } };
+                const mhRow = wsDash.getRow(monthlyStartRow + 1);
+                mhRow.getCell(2).value = 'ខែ';
+                mhRow.getCell(3).value = 'ចំនួនក្រុមហ៊ុន/សហគ្រាស';
+                mhRow.height = 20;
+                for (let mc = 2; mc <= 3; mc++) {
+                    mhRow.getCell(mc).font = { name: fontName, size: 9, bold: true, color: { argb: 'FFFFFFFF' } };
+                    mhRow.getCell(mc).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+                    mhRow.getCell(mc).border = thinBorder;
+                    mhRow.getCell(mc).alignment = { vertical: 'middle', horizontal: 'center' };
+                }
+                const monthNamesForExcel = ['មករា','កុម្ភៈ','មីនា','មេសា','ឧសភា','មិថុនា','កក្កដា','សីហា','កញ្ញា','តុលា','វិច្ឆិកា','ធ្នូ'];
+                if (data.monthly && data.monthly.labels) {
+                    data.monthly.labels.forEach((label, mi) => {
+                        const mr = wsDash.getRow(monthlyStartRow + 2 + mi);
+                        mr.getCell(2).value = label;
+                        mr.getCell(3).value = data.monthly.data[mi] || 0;
+                        mr.height = 18;
+                        for (let mc = 2; mc <= 3; mc++) {
+                            mr.getCell(mc).font = { name: fontName, size: 9 };
+                            mr.getCell(mc).border = thinBorder;
+                            if ((mi + 1) % 2 === 0) mr.getCell(mc).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                        }
+                    });
+                }
+
+                // Status Breakdown Data Table
+                const statusStartRow = monthlyStartRow + (data.monthly && data.monthly.labels ? data.monthly.labels.length : 0) + 4;
+                wsDash.getCell(`B${statusStartRow}`).value = 'តារាងទិន្នន័យស្ថានភាពសំណុំឯកសារ (សម្រាប់បង្កើតក្រាហ្វិក)៖';
+                wsDash.getCell(`B${statusStartRow}`).font = { name: fontName, size: 10, bold: true, color: { argb: 'FF1E3A8A' } };
+                const shRow = wsDash.getRow(statusStartRow + 1);
+                shRow.getCell(2).value = 'ស្ថានភាព';
+                shRow.getCell(3).value = 'ចំនួន';
+                shRow.getCell(4).value = 'សមាមាត្រ (%)';
+                shRow.height = 20;
+                for (let sc = 2; sc <= 4; sc++) {
+                    shRow.getCell(sc).font = { name: fontName, size: 9, bold: true, color: { argb: 'FFFFFFFF' } };
+                    shRow.getCell(sc).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+                    shRow.getCell(sc).border = thinBorder;
+                    shRow.getCell(sc).alignment = { vertical: 'middle', horizontal: 'center' };
+                }
+                if (data.statusBreakdown) {
+                    const statusEntries = Object.entries(data.statusBreakdown);
+                    const statusSum = statusEntries.reduce((s, e) => s + e[1], 0);
+                    statusEntries.forEach(([status, count], si) => {
+                        const sr = wsDash.getRow(statusStartRow + 2 + si);
+                        sr.getCell(2).value = status;
+                        sr.getCell(3).value = count;
+                        sr.getCell(4).value = statusSum > 0 ? count / statusSum : 0;
+                        sr.height = 18;
+                        for (let sc = 2; sc <= 4; sc++) {
+                            sr.getCell(sc).font = { name: fontName, size: 9 };
+                            sr.getCell(sc).border = thinBorder;
+                            if ((si + 1) % 2 === 0) sr.getCell(sc).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                            if (sc === 4) sr.getCell(sc).numFmt = '0.0%';
+                        }
+                    });
                 }
 
                 // Sheet 2: តាមរាជធានីខេត្ត
@@ -1556,10 +1644,8 @@
                 });
                 autofitWidths(wsProv, 6);
 
-                const provinceImg = await getChartImage('companyProvinceChart');
-                if (provinceImg) {
-                    addChartToSheet(wsProv, provinceImg, 'B16', 'I32');
-                }
+                // Note: Province data table above is already formatted for chart creation
+                // Users can select data range → Insert → Chart in Excel
 
                 // Sheet 3: បញ្ជីក្រុមហ៊ុន
                 const wsComp = workbook.addWorksheet('បញ្ជីក្រុមហ៊ុន');
@@ -1841,10 +1927,23 @@
             }
             setupExportButtons();
 
-            // Mobile menu drawer toggle
+            // Mobile menu drawer toggle & Desktop collapse toggle
             const menuBtn = document.getElementById('menuBtn');
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('sidebarBackdrop');
+            const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+
+            if (sidebarToggleBtn && sidebar) {
+                sidebarToggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('sidebar-collapsed');
+                    if (sidebar.classList.contains('sidebar-collapsed')) {
+                        sidebar.classList.remove('w-52');
+                    } else {
+                        sidebar.classList.add('w-52');
+                    }
+                });
+            }
+
             if (menuBtn && sidebar && backdrop) {
                 const toggleSidebar = () => {
                     sidebar.classList.toggle('-translate-x-full');
@@ -1853,18 +1952,20 @@
                 menuBtn.addEventListener('click', toggleSidebar);
                 backdrop.addEventListener('click', toggleSidebar);
 
-                // Close drawer when sidebar menu items are clicked
+                // Close drawer when sidebar menu items are clicked on mobile
                 sidebar.querySelectorAll('nav a').forEach(link => {
                     link.addEventListener('click', () => {
-                        sidebar.classList.add('-translate-x-full');
-                        backdrop.classList.add('hidden');
+                        if (window.innerWidth < 768) {
+                            sidebar.classList.add('-translate-x-full');
+                            backdrop.classList.add('hidden');
+                        }
                         
                         // Set active styling
                         sidebar.querySelectorAll('nav a').forEach(a => {
-                            a.className = 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all';
+                            a.className = 'nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all';
                         });
                         // Highlight clicked
-                        link.className = 'flex items-center gap-3 rounded-lg bg-blue-600/10 border border-blue-500/20 px-3 py-2.5 text-xs font-bold text-white transition-all';
+                        link.className = 'nav-item flex items-center gap-3 rounded-xl bg-blue-600/20 border border-blue-500/30 px-3 py-2.5 text-xs font-bold text-white transition-all';
                     });
                 });
             }
@@ -2440,22 +2541,59 @@
             const barColor = 'rgba(30, 58, 138, 0.8)', provinceColor = 'rgba(37, 99, 235, 0.8)';
             const pieColors = ['#22c55e','#f97316','#3b82f6','#eab308','#ef4444'];
 
+            // Register the datalabels plugin
+            if (typeof ChartDataLabels !== 'undefined') {
+                Chart.register(ChartDataLabels);
+            }
+
+            // --- Monthly Bar Chart (data labels above bars) ---
             const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
             if (monthlyChartInstance) monthlyChartInstance.destroy();
             monthlyChartInstance = new Chart(ctxMonthly, {
                 type: 'bar',
                 data: { labels: monthLabels, datasets: [{ label: 'ចំនួនក្រុមហ៊ុន/សហគ្រាសដែលបានចុះបញ្ជី', data: monthlyData, backgroundColor: barColor, borderRadius: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display:false }, tooltip: { titleFont: { family:'Siemreap' }, bodyFont: { family:'Siemreap' } } }, scales: { y: { beginAtZero:true, ticks: { precision:0 } }, x: { ticks: { font: { family:'Siemreap' } } } } }
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { titleFont: { family:'Siemreap' }, bodyFont: { family:'Siemreap' } },
+                        datalabels: {
+                            anchor: 'end', align: 'top',
+                            color: '#1e3a8a', font: { family: 'Siemreap', weight: 'bold', size: 11 },
+                            formatter: (value) => value > 0 ? value : ''
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { font: { family:'Siemreap' } } } }
+                }
             });
 
+            // --- Status Doughnut Chart (data labels with count + %) ---
             const ctxStatus = document.getElementById('statusChart').getContext('2d');
             if (statusChartInstance) statusChartInstance.destroy();
+            const statusValues = Object.values(statusCounts);
+            const statusTotal = statusValues.reduce((a, b) => a + b, 0);
             statusChartInstance = new Chart(ctxStatus, {
                 type: 'doughnut',
-                data: { labels: Object.keys(statusCounts), datasets: [{ data: Object.values(statusCounts), backgroundColor: pieColors, borderWidth: 1 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position:'bottom', labels: { font: { family:'Siemreap' } } }, tooltip: { titleFont: { family:'Siemreap' }, bodyFont: { family:'Siemreap' } } } }
+                data: { labels: Object.keys(statusCounts), datasets: [{ data: statusValues, backgroundColor: pieColors, borderWidth: 1 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family:'Siemreap' } } },
+                        tooltip: { titleFont: { family:'Siemreap' }, bodyFont: { family:'Siemreap' } },
+                        datalabels: {
+                            color: '#fff', font: { family: 'Siemreap', weight: 'bold', size: 11 },
+                            formatter: (value) => {
+                                if (!value || value === 0) return '';
+                                const pct = ((value / statusTotal) * 100).toFixed(1);
+                                return `${value}\n(${pct}%)`;
+                            },
+                            textAlign: 'center'
+                        }
+                    }
+                }
             });
 
+            // --- Province Bar Chart (horizontal, data labels at end of bars) ---
             const provinceEntries = Object.entries(provinceCounts).sort((a,b) => b[1]-a[1]).slice(0,15);
             const topSummary = document.getElementById('provinceTopSummary');
             topSummary.innerText = provinceEntries.length ? `ខេត្ត/រាជធានីដែលមានចំនួនឧបករណ៍ចុះបញ្ជីច្រើនជាងគេ៖ ${provinceEntries[0][0]} ចំនួន ${formatNumber(provinceEntries[0][1])} ករណី` : '';
@@ -2465,9 +2603,22 @@
             provinceChartInstance = new Chart(ctxProvince, {
                 type: 'bar',
                 data: { labels: provinceEntries.map(x => x[0]), datasets: [{ label: 'ចំនួនឧបករណ៍ដែលបានចុះបញ្ជី', data: provinceEntries.map(x => x[1]), backgroundColor: provinceColor, borderRadius: 4 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display:false }, tooltip: { titleFont: { family:'Siemreap' }, bodyFont: { family:'Siemreap' } } }, scales: { x: { beginAtZero:true, ticks: { precision:0 } }, y: { ticks: { font: { family:'Siemreap' } } } } }
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { titleFont: { family:'Siemreap' }, bodyFont: { family:'Siemreap' } },
+                        datalabels: {
+                            anchor: 'end', align: 'end',
+                            color: '#1e3a8a', font: { family: 'Siemreap', weight: 'bold', size: 10 },
+                            formatter: (value) => value > 0 ? value : ''
+                        }
+                    },
+                    scales: { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { ticks: { font: { family:'Siemreap' } } } }
+                }
             });
 
+            // --- Company Province Stacked Bar Chart (data labels inside bar segments) ---
             const companyProvinceEntries = Object.entries(companyProvinceCounts)
                 .map(([province, x]) => ({ province, total: x.total || 0, newCount: x.newCount || 0, renewalCount: x.renewalCount || Math.max(0, (x.total || 0) - (x.newCount || 0)) }))
                 .sort((a,b) => b.total - a.total || a.province.localeCompare(b.province));
@@ -2505,10 +2656,15 @@
                                     return `សរុប: ${formatNumber(row.total)}`;
                                 }
                             }
+                        },
+                        datalabels: {
+                            color: '#fff', font: { family: 'Siemreap', weight: 'bold', size: 10 },
+                            formatter: (value) => value > 0 ? value : '',
+                            anchor: 'center', align: 'center'
                         }
                     },
                     scales: {
-                        x: { stacked: true, beginAtZero:true, ticks: { precision:0 } },
+                        x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
                         y: { stacked: true, ticks: { autoSkip: false, font: { family:'Siemreap' } } }
                     }
                 }
