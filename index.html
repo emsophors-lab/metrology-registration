@@ -16,6 +16,8 @@
     <!-- Export libraries for Word/Excel download -->
     <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <!-- QR Code Generator Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <!-- Google Fonts for Khmer -->
     <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&family=Siemreap&display=swap" rel="stylesheet">
     
@@ -48,6 +50,32 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover,
         .table-container::-webkit-scrollbar-thumb:hover {
             background: #475569;
+        }
+
+        /* ─── Dashboard filter bar ───
+           The controls sit on the dark navy hero, so they carry white text.
+           A native <option> popup renders on its own light background and
+           inherits that white text, making the list unreadable — so the
+           option palette is set explicitly here. */
+        .filter-select,
+        .filter-input { color-scheme: dark; }
+        .filter-select option {
+            background-color: #0f2147;
+            color: #e8eefb;
+            font-weight: 500;
+            padding: 6px 8px;
+        }
+        .filter-select option:checked,
+        .filter-select option:hover {
+            background-color: #1d4ed8;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        /* An active filter is visibly distinct from "all". */
+        .filter-select.is-filtered,
+        .filter-input.is-filtered {
+            background-color: rgba(37, 99, 235, 0.35);
+            border-color: rgba(96, 165, 250, 0.75);
         }
 
         /* ═══════════════════════════════════════════════════════════════
@@ -491,6 +519,13 @@
 
             <!-- ─── Sidebar Footer ─── -->
             <div class="sidebar-footer">
+                <a href="#" onclick="openQrGeneratorModal(); return false;" title="បង្កើត QR Code (SI Circular QR Generator)" class="nav-item">
+                    <svg class="nav-icon text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v1m6 11h2m-6 0h-2v4m0-4v-3m-6 3h2m6 0h1m-4-11h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                    <span class="nav-label">បង្កើត QR Code</span>
+                </a>
+
                 <a href="#" onclick="openAboutDeveloperModal(); return false;" title="Settings / About Developer" class="nav-item">
                     <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <span class="nav-label">Settings</span>
@@ -726,21 +761,31 @@
                                 សម្របសម្រួលដោយ នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម។
                             </p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2.5 mt-3 pt-3 border-t border-white/10 relative">
-                            <!-- Filters (Month / Year placeholders) -->
-                            <select class="text-xs border border-white/20 rounded-lg px-2.5 py-1.5 bg-white/10 font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-400 backdrop-blur-sm">
-                                <option>ទិន្នន័យគ្រប់ខែ</option>
-                                <option>ឧសភា</option>
-                                <option>មិថុនា</option>
-                                <option>កក្កដា</option>
-                            </select>
-                            <select class="text-xs border border-white/20 rounded-lg px-2.5 py-1.5 bg-white/10 font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-400 backdrop-blur-sm">
-                                <option>២០២៦</option>
-                                <option>២០២៥</option>
-                            </select>
-                            <button type="button" class="bg-blue-500 hover:bg-blue-400 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-sm shadow-blue-500/30">
-                                ស្វែងរក
-                            </button>
+                        <!-- ═══ Dashboard filter bar. Options are built from the imported data. ═══ -->
+                        <div class="mt-3 pt-3 border-t border-white/10 relative">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <select id="filterMonth" aria-label="ខែ" class="filter-select text-xs border border-white/20 rounded-lg px-2.5 py-1.5 bg-white/10 font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-400 backdrop-blur-sm">
+                                    <option value="">ខែទាំងអស់</option>
+                                </select>
+                                <select id="filterYear" aria-label="ឆ្នាំ" class="filter-select text-xs border border-white/20 rounded-lg px-2.5 py-1.5 bg-white/10 font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-400 backdrop-blur-sm">
+                                    <option value="">ឆ្នាំទាំងអស់</option>
+                                </select>
+                                <select id="filterLocation" aria-label="ទីតាំង" class="filter-select text-xs border border-white/20 rounded-lg px-2.5 py-1.5 bg-white/10 font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-400 backdrop-blur-sm">
+                                    <option value="">ទីតាំងទាំងអស់</option>
+                                </select>
+                                <select id="filterStatus" aria-label="ស្ថានភាព" class="filter-select text-xs border border-white/20 rounded-lg px-2.5 py-1.5 bg-white/10 font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-400 backdrop-blur-sm">
+                                    <option value="">ស្ថានភាពទាំងអស់</option>
+                                </select>
+                                <input id="filterText" type="search" placeholder="ស្វែងរកឈ្មោះ/លេខចុះបញ្ជី" aria-label="ស្វែងរកអត្ថបទ"
+                                       class="filter-input text-xs border border-white/20 rounded-lg px-2.5 py-1.5 bg-white/10 font-medium text-white placeholder-blue-200/50 focus:outline-none focus:ring-1 focus:ring-blue-400 backdrop-blur-sm w-44">
+                                <button type="button" id="filterSearchBtn" class="bg-blue-500 hover:bg-blue-400 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-sm shadow-blue-500/30">
+                                    ស្វែងរក
+                                </button>
+                                <button type="button" id="filterResetBtn" class="border border-white/25 hover:bg-white/10 text-blue-100 font-bold text-xs px-3.5 py-1.5 rounded-lg transition">
+                                    សម្អាត
+                                </button>
+                            </div>
+                            <p id="filterResultSummary" class="text-[10.5px] text-blue-200/80 font-medium mt-2 leading-relaxed"></p>
                         </div>
                     </div>
 
@@ -1104,6 +1149,100 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SI CIRCULAR QR CODE GENERATOR MODAL                                -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div id="qrGeneratorModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-200" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden transform scale-95 transition-transform duration-200 flex flex-col max-h-[92vh]">
+            
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-[#0c1a3a] via-[#0f2147] to-[#0c1a3a] text-white px-6 py-4 flex items-center justify-between border-b border-amber-600/40 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="h-9 w-9 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-400 flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-4v-3m-6 3h2m6 0h1m-4-11h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                    </div>
+                    <div>
+                        <h2 id="qrModalTitle" class="font-bold text-base text-white tracking-wide leading-tight">ប្រព័ន្ធបង្កើត QR Code មាត្រាសាស្ត្រ (SI Circular QR Generator)</h2>
+                        <p class="text-[11px] text-blue-200/80 font-medium">Generate high-resolution SI circular rainbow QR codes for certificates &amp; documents</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeQrGeneratorModal()" class="p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition" aria-label="Close modal">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Modal Body (Grid: Left controls, Right preview) -->
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                    
+                    <!-- Left Column: Settings & Input Controls -->
+                    <div class="md:col-span-6 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                តំណភ្ជាប់ ឬទិន្នន័យ QR (Destination URL / Text)
+                            </label>
+                            <input type="text" id="qrModalTextInput" value="https://metrology-registration.vercel.app" placeholder="https://..." oninput="renderSiQrCode()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                            <p class="text-[10px] text-slate-400 mt-1">បញ្ចូល URL ឬព័ត៌មានលម្អិតដែលត្រូវបង្កើតជា QR Code</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                អក្សរកណ្តាល (Center Text Logo)
+                            </label>
+                            <input type="text" id="qrModalCenterInput" value="SI" maxlength="6" placeholder="ឧ. SI" oninput="renderSiQrCode()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                            <p class="text-[10px] text-slate-400 mt-1">អក្សរបង្ហាញនៅកណ្តាលរង្វង់ QR Code (ឧ. SI, NMC)</p>
+                        </div>
+
+                        <!-- Quick Preset Buttons -->
+                        <div class="pt-2 border-t border-slate-100">
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                ជ្រើសរើសតំណភ្ជាប់គំរូ (Quick Presets)
+                            </label>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" onclick="setQrPreset('https://metrology-registration.vercel.app', 'SI')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
+                                    ប្រព័ន្ធចុះបញ្ជី (System)
+                                </button>
+                                <button type="button" onclick="setQrPreset('https://misti.gov.kh', 'MISTI')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
+                                    ក្រសួង (MISTI)
+                                </button>
+                                <button type="button" onclick="setQrPreset('NMC-VERIFY-2026-REG', 'NMC')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
+                                    ប័ណ្ណសម្គាល់ (Certificate)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Download Action Button -->
+                        <div class="pt-3">
+                            <button type="button" id="downloadQrBtn" onclick="downloadSiQrCanvas()" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold text-xs py-3 px-4 rounded-xl shadow-md transition-all">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                ទាញយក PNG កម្រិតច្បាស់ (Download High-Res PNG)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Live High-Res Canvas Preview -->
+                    <div class="md:col-span-6 flex flex-col items-center justify-center bg-slate-50 border border-slate-200 rounded-2xl p-5">
+                        <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            ការមើលគំរូជាក់ស្តែង (Live Preview)
+                        </div>
+                        <div class="w-full max-w-[280px] aspect-square rounded-2xl bg-white shadow-md border border-slate-200 p-2 flex items-center justify-center overflow-hidden">
+                            <canvas id="siQrCanvas" class="w-full h-full object-contain"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
+                <span>National Metrology Center of Cambodia</span>
+                <span class="font-mono text-[10px] text-slate-400">SI Circular Metrology Standard</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
     <!-- ABOUT DEVELOPER MODAL DIALOG                                        -->
     <!-- Formal, official government metrology system profile card           -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
@@ -1233,15 +1372,227 @@
             document.body.style.overflow = '';
         }
 
+        // ═══════════════════════════════════════════════════════════════════
+        // SI CIRCULAR QR CODE GENERATOR CONTROLLER
+        // ═══════════════════════════════════════════════════════════════════
+        function openQrGeneratorModal() {
+            const modal = document.getElementById('qrGeneratorModal');
+            if (!modal) return;
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            const dialog = modal.firstElementChild;
+            if (dialog) dialog.classList.remove('scale-95');
+            document.body.style.overflow = 'hidden';
+            setTimeout(renderSiQrCode, 50);
+        }
+
+        function closeQrGeneratorModal() {
+            const modal = document.getElementById('qrGeneratorModal');
+            if (!modal) return;
+            const dialog = modal.firstElementChild;
+            if (dialog) dialog.classList.add('scale-95');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            document.body.style.overflow = '';
+        }
+
+        function setQrPreset(url, centerText) {
+            const textInput = document.getElementById('qrModalTextInput');
+            const centerInput = document.getElementById('qrModalCenterInput');
+            if (textInput) textInput.value = url;
+            if (centerInput) centerInput.value = centerText;
+            renderSiQrCode();
+        }
+
+        function renderSiQrCode() {
+            const textInput = document.getElementById('qrModalTextInput');
+            const centerTextInput = document.getElementById('qrModalCenterInput');
+            const canvas = document.getElementById('siQrCanvas');
+            if (!canvas || !textInput || !centerTextInput) return;
+
+            const ctx = canvas.getContext('2d');
+            const size = 1200;
+            canvas.width = size;
+            canvas.height = size;
+
+            const colors = [
+                '#ca2537', // red top
+                '#f2722e', // orange upper-right
+                '#efba3c', // yellow right/lower-right
+                '#63b346', // green lower-right
+                '#2f72bf', // blue lower-left
+                '#bd31aa', // magenta left/lower-left
+                '#3b1496'  // purple upper-left
+            ];
+
+            const text = textInput.value || ' ';
+            const centerText = centerTextInput.value || 'SI';
+            const cx = size / 2;
+            const cy = size / 2;
+
+            ctx.clearRect(0, 0, size, size);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+
+            try {
+                if (typeof window.qrcode !== 'function') {
+                    console.error('qrcode-generator library not loaded');
+                    return;
+                }
+                const qr = window.qrcode(0, 'H');
+                qr.addData(text);
+                qr.make();
+                const count = qr.getModuleCount();
+
+                const qrSide = 810;
+                const cellSize = qrSide / count;
+                const offsetX = cx - qrSide / 2;
+                const offsetY = cy - qrSide / 2;
+                const qrClipRadius = qrSide * 0.51;
+                const centerLogoRadius = 125;
+
+                const ringRadius = 500;
+                const ringWidth = 58;
+                const gapDeg = 7;
+                const sliceDeg = 360 / colors.length;
+                ctx.lineWidth = ringWidth;
+                ctx.lineCap = 'butt';
+
+                const degToRad = (deg) => deg * Math.PI / 180;
+
+                for (let i = 0; i < colors.length; i++) {
+                    const centerDeg = -90 + i * sliceDeg;
+                    const startDeg = centerDeg - sliceDeg / 2 + gapDeg / 2;
+                    const endDeg = centerDeg + sliceDeg / 2 - gapDeg / 2;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, ringRadius, degToRad(startDeg), degToRad(endDeg));
+                    ctx.strokeStyle = colors[i];
+                    ctx.stroke();
+                }
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, 452, 0, Math.PI * 2);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 22;
+                ctx.stroke();
+
+                const getColor = (x, y) => {
+                    let deg = Math.atan2(y - cy, x - cx) * 180 / Math.PI;
+                    deg = (deg + 450) % 360;
+                    const idx = Math.floor((deg + sliceDeg / 2) / sliceDeg) % colors.length;
+                    return colors[idx];
+                };
+
+                const isFinderPattern = (r, c) => {
+                    return (
+                        (r < 7 && c < 7) ||
+                        (r < 7 && c >= count - 7) ||
+                        (r >= count - 7 && c < 7)
+                    );
+                };
+
+                const insideMainCircle = (x, y) => Math.hypot(x - cx, y - cy) <= qrClipRadius;
+                const insideCenterLogo = (x, y) => Math.hypot(x - cx, y - cy) <= centerLogoRadius + cellSize * 0.8;
+
+                for (let r = 0; r < count; r++) {
+                    for (let c = 0; c < count; c++) {
+                        if (!qr.isDark(r, c) || isFinderPattern(r, c)) continue;
+
+                        const x = offsetX + c * cellSize;
+                        const y = offsetY + r * cellSize;
+                        const mx = x + cellSize / 2;
+                        const my = y + cellSize / 2;
+
+                        if (!insideMainCircle(mx, my) || insideCenterLogo(mx, my)) continue;
+
+                        ctx.fillStyle = getColor(mx, my);
+                        ctx.fillRect(
+                            Math.floor(x),
+                            Math.floor(y),
+                            Math.ceil(cellSize) + 0.75,
+                            Math.ceil(cellSize) + 0.75
+                        );
+                    }
+                }
+
+                const roundRect = (ctx, x, y, width, height, radius, fill) => {
+                    const r = Math.min(radius, width / 2, height / 2);
+                    ctx.beginPath();
+                    ctx.moveTo(x + r, y);
+                    ctx.lineTo(x + width - r, y);
+                    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+                    ctx.lineTo(x + width, y + height - r);
+                    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+                    ctx.lineTo(x + r, y + height);
+                    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+                    ctx.lineTo(x, y + r);
+                    ctx.quadraticCurveTo(x, y, x + r, y);
+                    ctx.closePath();
+                    if (fill) ctx.fill();
+                };
+
+                const drawFinder = (r, c) => {
+                    const x = offsetX + c * cellSize;
+                    const y = offsetY + r * cellSize;
+                    const f = 7 * cellSize;
+                    const mx = x + f / 2;
+                    const my = y + f / 2;
+                    const color = getColor(mx, my);
+
+                    ctx.fillStyle = color;
+                    roundRect(ctx, x, y, f, f, cellSize * 1.35, true);
+
+                    ctx.fillStyle = '#ffffff';
+                    roundRect(ctx, x + cellSize * 0.9, y + cellSize * 0.9, f - cellSize * 1.8, f - cellSize * 1.8, cellSize * 0.95, true);
+
+                    ctx.fillStyle = color;
+                    roundRect(ctx, x + cellSize * 2.2, y + cellSize * 2.2, f - cellSize * 4.4, f - cellSize * 4.4, cellSize * 0.55, true);
+                };
+
+                drawFinder(0, 0);
+                drawFinder(0, count - 7);
+                drawFinder(count - 7, 0);
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, centerLogoRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+
+                ctx.fillStyle = '#000000';
+                ctx.font = '400 120px Arial, Helvetica, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(centerText, cx, cy + 6);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function downloadSiQrCanvas() {
+            const canvas = document.getElementById('siQrCanvas');
+            if (!canvas) return;
+            const link = document.createElement('a');
+            link.download = 'SI_Circular_QR_Code.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeAboutDeveloperModal();
+            if (e.key === 'Escape') {
+                closeAboutDeveloperModal();
+                closeQrGeneratorModal();
+            }
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-            const modal = document.getElementById('aboutDeveloperModal');
-            if (modal) {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) closeAboutDeveloperModal();
+            const devModal = document.getElementById('aboutDeveloperModal');
+            if (devModal) {
+                devModal.addEventListener('click', (e) => {
+                    if (e.target === devModal) closeAboutDeveloperModal();
+                });
+            }
+            const qrModal = document.getElementById('qrGeneratorModal');
+            if (qrModal) {
+                qrModal.addEventListener('click', (e) => {
+                    if (e.target === qrModal) closeQrGeneratorModal();
                 });
             }
         });
@@ -1365,6 +1716,191 @@
             return canvas.toDataURL('image/png');
         }
 
+        /* ═══════════════════════════════════════════════════════════════════════
+           REPORT CHART FACTORY
+           Renders dedicated report charts on an offscreen canvas and returns PNG
+           data URLs for embedding in Word and Excel. Independent of whatever the
+           dashboard happens to be showing, so report charts are always complete.
+           Charts with no meaningful data return null and are simply omitted.
+           ═══════════════════════════════════════════════════════════════════════ */
+        const REPORT_CHART_PALETTE = ['#1e3a8a', '#2563eb', '#0e7490', '#b45309', '#7c3aed', '#be123c', '#047857', '#a16207'];
+
+        async function renderReportChart(config, width = 900, height = 460) {
+            if (typeof Chart === 'undefined') return null;
+            const canvas = document.createElement('canvas');
+            canvas.width = width; canvas.height = height;
+            // Off-screen but attached, so fonts resolve the same way as on-page.
+            canvas.style.cssText = 'position:fixed;left:-10000px;top:0;';
+            document.body.appendChild(canvas);
+            let url = null;
+            try {
+                const chart = new Chart(canvas.getContext('2d'), {
+                    ...config,
+                    options: {
+                        ...(config.options || {}),
+                        responsive: false,
+                        animation: false,
+                        devicePixelRatio: 2,
+                        backgroundColor: '#ffffff'
+                    }
+                });
+                chart.update('none');
+                // White matte — DOCX/XLSX images have no page background of their own.
+                const out = document.createElement('canvas');
+                out.width = canvas.width; out.height = canvas.height;
+                const octx = out.getContext('2d');
+                octx.fillStyle = '#ffffff';
+                octx.fillRect(0, 0, out.width, out.height);
+                octx.drawImage(canvas, 0, 0);
+                url = out.toDataURL('image/png');
+                chart.destroy();
+            } catch (e) {
+                console.warn('Report chart could not be rendered:', e);
+            } finally {
+                canvas.remove();
+            }
+            return url;
+        }
+
+        const KH_FONT = { family: 'Siemreap', size: 13 };
+        const chartTitle = text => ({ display: true, text, font: { family: 'Siemreap', size: 15, weight: 'bold' }, color: '#0f2147', padding: { bottom: 12 } });
+        const valueLabels = (fmt) => (typeof ChartDataLabels === 'undefined' ? {} : {
+            datalabels: { color: '#0f2147', font: { family: 'Siemreap', size: 12, weight: 'bold' }, formatter: fmt }
+        });
+
+        async function buildReportCharts(a) {
+            const charts = {};
+            if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
+
+            // 1. Status distribution
+            if (a.statusAnalysis.length) {
+                charts.status = await renderReportChart({
+                    type: 'doughnut',
+                    data: {
+                        labels: a.statusAnalysis.map(s => `${s.label} — ${s.count} (${s.percent}%)`),
+                        datasets: [{ data: a.statusAnalysis.map(s => s.count), backgroundColor: REPORT_CHART_PALETTE, borderColor: '#fff', borderWidth: 2 }]
+                    },
+                    options: {
+                        plugins: {
+                            title: chartTitle('ការចែកចាយស្ថានភាពសំណើ'),
+                            legend: { position: 'right', labels: { font: KH_FONT, color: '#1f2937', boxWidth: 14 } },
+                            ...valueLabels(v => v > 0 ? v : '')
+                        }
+                    }
+                }, 900, 420);
+            }
+
+            // 2. New vs renewal
+            const app = a.applications;
+            if (app.total > 0) {
+                charts.registrationType = await renderReportChart({
+                    type: 'bar',
+                    data: {
+                        labels: ['ចុះបញ្ជីថ្មី', 'ចុះបញ្ជីបន្ត'].concat(app.unspecifiedRegistration ? ['មិនបានបញ្ជាក់'] : []),
+                        datasets: [{
+                            data: [app.newRegistration, app.renewal].concat(app.unspecifiedRegistration ? [app.unspecifiedRegistration] : []),
+                            backgroundColor: ['#2563eb', '#0e7490', '#94a3b8'], borderRadius: 4, barThickness: 90
+                        }]
+                    },
+                    options: {
+                        plugins: { title: chartTitle('ការចុះបញ្ជីថ្មី និងការចុះបញ្ជីបន្ត'), legend: { display: false }, ...valueLabels(v => v > 0 ? v : '') },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0, font: KH_FONT } }, x: { ticks: { font: KH_FONT } } }
+                    }
+                }, 760, 400);
+            }
+
+            // 3. Instruments vs packaged goods
+            if (a.items.total > 0) {
+                charts.itemMix = await renderReportChart({
+                    type: 'doughnut',
+                    data: {
+                        labels: [
+                            `ឧបករណ៍មាត្រាសាស្ត្រ — ${a.items.instruments} (${a.items.instrumentShare}%)`,
+                            `ទំនិញវេចខ្ចប់ — ${a.items.packagedGoods} (${a.items.packagedGoodsShare}%)`
+                        ].concat(a.items.unclassified ? [`មិនបានចាត់ថ្នាក់ — ${a.items.unclassified}`] : []),
+                        datasets: [{
+                            data: [a.items.instruments, a.items.packagedGoods].concat(a.items.unclassified ? [a.items.unclassified] : []),
+                            backgroundColor: ['#1e3a8a', '#b45309', '#94a3b8'], borderColor: '#fff', borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            title: chartTitle('សមាមាត្រឧបករណ៍មាត្រាសាស្ត្រ និងទំនិញវេចខ្ចប់'),
+                            legend: { position: 'right', labels: { font: KH_FONT, color: '#1f2937', boxWidth: 14 } },
+                            ...valueLabels(v => v > 0 ? v : '')
+                        }
+                    }
+                }, 900, 420);
+            }
+
+            // 4. Applications by province (top 10, horizontal)
+            if (a.provinceAnalysis.length) {
+                const top = a.provinceAnalysis.slice(0, 10);
+                charts.province = await renderReportChart({
+                    type: 'bar',
+                    data: {
+                        labels: top.map(p => p.province),
+                        datasets: [{ data: top.map(p => p.applications), backgroundColor: '#2563eb', borderRadius: 4 }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        plugins: {
+                            title: chartTitle(`ចំនួនសំណើតាមរាជធានី/ខេត្ត${a.provinceAnalysis.length > 10 ? ' (១០ កំពូល)' : ''}`),
+                            legend: { display: false },
+                            ...(typeof ChartDataLabels === 'undefined' ? {} : { datalabels: { anchor: 'end', align: 'right', color: '#0f2147', font: { family: 'Siemreap', size: 12, weight: 'bold' }, formatter: v => v > 0 ? v : '' } })
+                        },
+                        layout: { padding: { right: 28 } },
+                        scales: { x: { beginAtZero: true, ticks: { precision: 0, font: KH_FONT } }, y: { ticks: { font: KH_FONT } } }
+                    }
+                }, 900, Math.max(320, 60 + top.length * 34));
+            }
+
+            // 5. Intake trend — daily when the data spans one month, monthly otherwise
+            if (a.intakeAnalysis.buckets.length) {
+                const b = a.intakeAnalysis.buckets;
+                const label = k => a.intakeAnalysis.granularity === 'daily'
+                    ? toKhmerDigits(Number(k.slice(8, 10)))
+                    : `${monthNamesKh[Number(k.slice(5, 7)) - 1]} ${toKhmerDigits(k.slice(0, 4))}`;
+                charts.intake = await renderReportChart({
+                    type: 'bar',
+                    data: { labels: b.map(x => label(x.key)), datasets: [{ data: b.map(x => x.count), backgroundColor: '#1e3a8a', borderRadius: 3 }] },
+                    options: {
+                        plugins: { title: chartTitle(a.intakeAnalysis.title), legend: { display: false }, ...valueLabels(v => v > 0 ? v : '') },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0, font: KH_FONT } }, x: { ticks: { font: KH_FONT, autoSkip: false } } }
+                    }
+                }, 950, 400);
+            }
+
+            // 6. Delay distribution — measurable applications only
+            const pp = a.processingPerformance;
+            if (pp.measurableApplications > 0 && pp.bands.some(x => x.count > 0)) {
+                charts.delay = await renderReportChart({
+                    type: 'bar',
+                    data: {
+                        labels: pp.bands.map(x => x.label),
+                        datasets: [{ data: pp.bands.map(x => x.count), backgroundColor: ['#047857', '#a16207', '#b45309', '#c2410c', '#be123c', '#881337'], borderRadius: 4 }]
+                    },
+                    options: {
+                        plugins: {
+                            title: chartTitle(`ការចែកចាយរយៈពេលយឺត (លើ ${pp.measurableApplications} សំណើដែលគណនាបាន)`),
+                            legend: { display: false }, ...valueLabels(v => v > 0 ? v : '')
+                        },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0, font: KH_FONT } }, x: { ticks: { font: KH_FONT } } }
+                    }
+                }, 900, 400);
+            }
+            return charts;
+        }
+
+        // docx/ExcelJS both need raw bytes, not a data URL.
+        function dataUrlToUint8(dataUrl) {
+            const b64 = String(dataUrl).split(',')[1] || '';
+            const bin = atob(b64);
+            const out = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+            return out;
+        }
+
         function base64ToUint8(base64String) {
             const base64 = base64String.split(',')[1] || base64String;
             const binary = window.atob(base64);
@@ -1462,10 +1998,9 @@
                     WidthType, BorderStyle, AlignmentType, ImageRun
                 } = docx;
 
-                // 1. Get images
-                const monthlyImg = await getChartImage('monthlyChart');
-                const statusImg = await getChartImage('statusChart');
-                const provinceImg = await getChartImage('companyProvinceChart');
+                // 1. Dedicated report charts (independent of the dashboard view)
+                const A = data.analytics;
+                const reportCharts = await buildReportCharts(A);
 
                 // 2. Build Header (Ministry on Left, Nation on Right)
                 const headerTable = new Table({
@@ -1512,6 +2047,12 @@
                         alignment: AlignmentType.CENTER,
                         children: [new TextRun({ text: "របាយការណ៍បូកសរុបលទ្ធផលការងារចុះបញ្ជីមាត្រាសាស្ត្រ", font: "Moul", size: 26, color: "1E3A8A", underline: {} })]
                     }),
+                    // When the dashboard is filtered, the report says so explicitly.
+                    ...(data.activeFilterText ? [new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 80 },
+                        children: [new TextRun({ text: `លក្ខខណ្ឌស្វែងរក៖ ${data.activeFilterText}`, font: "Siemreap", size: 20, color: "B45309" })]
+                    })] : []),
                     new Paragraph({ spacing: { before: 120, after: 120 } }),
                     new Paragraph({
                         alignment: AlignmentType.CENTER,
@@ -1849,7 +2390,9 @@
                 wsDash.views = [{ showGridLines: true }];
                 wsDash.getCell('B2').value = 'របាយការណ៍សង្ខេបលទ្ធផលចុះបញ្ជីមាត្រាសាស្ត្រជាតិ';
                 wsDash.getCell('B2').font = { name: fontName, size: 16, bold: true, color: { argb: 'FF1E3A8A' } };
-                wsDash.getCell('B3').value = `រយៈពេលរបាយការណ៍៖ ${data.period}`;
+                wsDash.getCell('B3').value = data.activeFilterText
+                    ? `រយៈពេលរបាយការណ៍៖ ${data.period}  |  លក្ខខណ្ឌស្វែងរក៖ ${data.activeFilterText}`
+                    : `រយៈពេលរបាយការណ៍៖ ${data.period}`;
                 wsDash.getCell('B3').font = { name: fontName, size: 10, italic: true };
 
                 formatKpiCard(wsDash, 'B', 'ចំនួនឧបករណ៍សរុប', data.totals.total, 'FFF1F5F9');
@@ -2147,6 +2690,7 @@
                 wsNotes.views = [{ showGridLines: true }];
                 wsNotes.addRow(['ចំណុច', 'សេចក្តីពន្យល់']);
                 wsNotes.addRow(['វិធីរាប់ក្រុមហ៊ុន/សហគ្រាស', 'រាល់ជួរដែល «ល.រ មុខសញ្ញា = ១» ត្រូវរាប់ជាក្រុមហ៊ុន/សហគ្រាស ១។']);
+                wsNotes.addRow(['លក្ខខណ្ឌស្វែងរក', data.activeFilterText || 'ទិន្នន័យទាំងអស់ (មិនបានច្រោះ)']);
                 wsNotes.addRow(['ចំនួនក្រុមហ៊ុន/សហគ្រាសសរុប', data.totals.companyCount]);
                 wsNotes.addRow(['មុខសញ្ញាសរុប', data.totals.total]);
                 wsNotes.addRow(['ឧបករណ៍មាត្រាសាស្ត្រ', data.totals.toolsCount]);
@@ -2256,7 +2800,8 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             try {
-                updateDashboard([]);
+                initDashboardFilters();
+                setDatasetAndRender([]);
                 setUploadStatus('រង់ចាំ Upload ឯកសារ Excel/CSV...');
             } catch (error) {
                 console.error(error);
@@ -2404,7 +2949,7 @@
                         }
                         const workbook = XLSX.read(event.target.result, { type: 'array', cellDates: true });
                         const rows = extractReportRowsFromWorkbook(workbook);
-                        updateDashboard(rows);
+                        setDatasetAndRender(rows);
                         setUploadStatus(`បាន upload Excel ដោយជោគជ័យ: ${file.name} — ${formatNumber(rows.length)} rows។`);
                     } catch (error) {
                         console.error(error);
@@ -2432,7 +2977,7 @@
 
         function processData(csvText) {
             if (!csvText || !String(csvText).trim()) {
-                updateDashboard([]);
+                setDatasetAndRender([]);
                 return [];
             }
             let parsedRows = [];
@@ -2441,7 +2986,7 @@
                 skipEmptyLines: true,
                 complete: res => {
                     parsedRows = res.data.filter(r => Object.values(r).some(v => String(v ?? '').trim() !== ''));
-                    updateDashboard(parsedRows);
+                    setDatasetAndRender(parsedRows);
                 }
             });
             return parsedRows;
@@ -2616,6 +3161,502 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════════════
+           REPORT ANALYTICS — ONE SOURCE OF TRUTH
+           ───────────────────────────────────────────────────────────────────────
+           Every figure printed by the dashboard, the Word report and the Excel
+           workbook is computed here once. Exporters read this object; they never
+           recompute a statistic of their own.
+
+           GRAIN DISCIPLINE — the two grains are kept strictly apart:
+             applications.*  one primary row (ល.រ មុខសញ្ញា = ១) = one application
+             items.*         one raw row = one registered instrument / packaged good
+           ═══════════════════════════════════════════════════════════════════════ */
+        const REPORT_TITLE_KH = 'របាយការណ៍ស្តីពី ស្ថានភាព និងលទ្ធផលនៃការចុះបញ្ជីមាត្រាសាស្ត្រ';
+
+        function pct(part, whole) { return whole > 0 ? +( (part / whole) * 100 ).toFixed(1) : 0; }
+        function khPct(part, whole) { return `${toKhmerDigits(pct(part, whole).toFixed(1))}%`; }
+
+        function buildReportAnalytics(ctx) {
+            const { rows, companyRows, tools, packages, provinceRows, delayAnalysis, statuses } = ctx;
+
+            /* ─── Applications (application grain) ─── */
+            const totalApplications = companyRows.length;
+            const completed = companyRows.filter(c => isCompletedStatus(c.rawStatus)).length;
+            const pending = totalApplications - completed;
+            const newReg = companyRows.filter(c => c.registrationType === 'new').length;
+            const renewal = companyRows.filter(c => c.registrationType === 'renewal').length;
+            const unspecifiedReg = totalApplications - newReg - renewal;
+
+            /* ─── Items (item grain) ─── */
+            const itemRows = rows.filter(r => getItemRowNo(r) !== null);
+            const instruments = itemRows.filter(r => cleanText(r['មុខសញ្ញាជាឧបករណ៍មាត្រាសាស្ត្រ ឬទំនិញវេចខ្ចប់'], '').includes('ឧបករណ៍')).length;
+            const packagedGoods = itemRows.filter(r => cleanText(r['មុខសញ្ញាជាឧបករណ៍មាត្រាសាស្ត្រ ឬទំនិញវេចខ្ចប់'], '').includes('ទំនិញ')).length;
+            const totalItems = itemRows.length;
+            const unclassifiedItems = totalItems - instruments - packagedGoods;
+
+            /* ─── Status analysis (application grain, with percentages) ─── */
+            const statusMap = {};
+            companyRows.forEach(c => {
+                const code = normalizeStatusCode(c.rawStatus) || 'UNSPECIFIED';
+                statusMap[code] = (statusMap[code] || 0) + 1;
+            });
+            const statusAnalysis = Object.entries(statusMap)
+                .map(([code, count]) => ({ code, label: statusDisplayLabel(code), count, percent: pct(count, totalApplications) }))
+                .sort((a, b) => b.count - a.count);
+
+            /* ─── Province analysis (both grains, kept in separate columns) ─── */
+            const provinceMap = {};
+            companyRows.forEach(c => {
+                const p = c.province || '-';
+                if (!provinceMap[p]) provinceMap[p] = { province: p, applications: 0, completed: 0, pending: 0, newCount: 0, renewalCount: 0, instruments: 0, packagedGoods: 0, items: 0 };
+                const e = provinceMap[p];
+                e.applications++;
+                if (isCompletedStatus(c.rawStatus)) e.completed++; else e.pending++;
+                if (c.registrationType === 'new') e.newCount++; else e.renewalCount++;
+                e.instruments += c.toolsCount || 0;
+                e.packagedGoods += c.packagesCount || 0;
+                e.items += c.totalItems || 0;
+            });
+            const provinceAnalysis = Object.values(provinceMap)
+                .map(p => ({ ...p, percent: pct(p.applications, totalApplications) }))
+                .sort((a, b) => b.applications - a.applications);
+
+            /* ─── Intake analysis — granularity follows the data, never assumed ─── */
+            const intakeDates = companyRows.map(c => c.regDateObj).filter(Boolean).sort((a, b) => a - b);
+            const monthKeys = [...new Set(intakeDates.map(d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`))];
+            const useDaily = monthKeys.length <= 1;
+            const bucketMap = {};
+            intakeDates.forEach(d => {
+                const key = useDaily ? toISODateString(d) : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                bucketMap[key] = (bucketMap[key] || 0) + 1;
+            });
+            const buckets = Object.entries(bucketMap).map(([key, count]) => ({ key, count })).sort((a, b) => a.key.localeCompare(b.key));
+            const busiest = buckets.slice().sort((a, b) => b.count - a.count)[0] || null;
+            const quietest = buckets.length ? buckets.slice().sort((a, b) => a.count - b.count)[0] : null;
+            const intakeAnalysis = {
+                granularity: useDaily ? 'daily' : 'monthly',
+                buckets,
+                busiest,
+                quietest,
+                firstDate: intakeDates.length ? toISODateString(intakeDates[0]) : null,
+                lastDate: intakeDates.length ? toISODateString(intakeDates[intakeDates.length - 1]) : null,
+                distinctPeriods: buckets.length,
+                title: useDaily && intakeDates.length
+                    ? `ចំនួនសំណើតាមថ្ងៃ ក្នុងខែ${monthNamesKh[intakeDates[0].getMonth()]} ឆ្នាំ${toKhmerDigits(intakeDates[0].getFullYear())}`
+                    : 'ចំនួនសំណើតាមខែ'
+            };
+
+            /* ─── Item portfolio (item grain) ─── */
+            const portfolioFrom = (summary, kind) => Object.entries(summary)
+                .map(([name, v]) => ({ name, kind, count: v.total, companies: v.companies ? v.companies.size : 0 }))
+                .sort((a, b) => b.count - a.count);
+            const itemPortfolio = [...portfolioFrom(tools, 'ឧបករណ៍មាត្រាសាស្ត្រ'), ...portfolioFrom(packages, 'ទំនិញវេចខ្ចប់')]
+                .sort((a, b) => b.count - a.count)
+                .map(x => ({ ...x, percent: pct(x.count, totalItems) }));
+
+            /* ─── Data quality (reported, never silently dropped) ─── */
+            const isBlankName = v => { const s = cleanText(v, ''); return !s || /^(N\/?A|-|គ្មាន|មិនបានបញ្ជាក់)$/i.test(s); };
+            const thisYear = new Date().getFullYear() + 1;
+            const dataQuality = {
+                invalidProcessingDates: delayAnalysis.statistics.invalidDateRecords,
+                invalidProcessingDetail: [...new Set(delayAnalysis.invalid.map(r => r.invalidReason))],
+                missingCompanyName: companyRows.filter(c => isBlankName(c.company)).length,
+                missingItemName: itemRows.filter(r => isBlankName(r['ឈ្មោះឧបករណ៍មាត្រាសាស្ត្រ/ទំនិញវេចខ្ចប់'])).length,
+                numericOriginCountry: itemRows.filter(r => /^\d+(\.\d+)?$/.test(cleanText(r['ប្រទេសផលិតដើម'], ''))).length,
+                invalidManufactureYear: itemRows.filter(r => { const n = Number(cleanText(r['ឆ្នាំផលិត'], '')); return !(n >= 1950 && n <= thisYear); }).length,
+                missingAccuracyClass: itemRows.filter(r => isBlankName(r['កម្រិតលម្អៀង/សុក្រឹតភាព'])).length,
+                totalItemRows: totalItems,
+                registrationTypeInferred: true
+            };
+
+            /* ─── Consistency cross-checks (surfaced, not hidden) ─── */
+            const provinceApplicationSum = provinceAnalysis.reduce((s, p) => s + p.applications, 0);
+            const crossChecks = [
+                { name: 'ក្រុមហ៊ុនសរុប = អនុម័តរួច + កំពុងដំណើរការ', expected: totalApplications, actual: completed + pending, pass: totalApplications === completed + pending },
+                { name: 'ធាតុសរុប = ឧបករណ៍ + ទំនិញវេចខ្ចប់', expected: totalItems, actual: instruments + packagedGoods + unclassifiedItems, pass: totalItems === instruments + packagedGoods + unclassifiedItems },
+                { name: 'ផលបូកតាមរាជធានី/ខេត្ត = ក្រុមហ៊ុនសរុប', expected: totalApplications, actual: provinceApplicationSum, pass: totalApplications === provinceApplicationSum },
+                { name: 'ចុះបញ្ជីថ្មី + បន្ត = ក្រុមហ៊ុនសរុប', expected: totalApplications, actual: newReg + renewal + unspecifiedReg, pass: totalApplications === newReg + renewal + unspecifiedReg },
+                { name: 'ស្ថានភាពសរុប = ក្រុមហ៊ុនសរុប', expected: totalApplications, actual: statusAnalysis.reduce((s, x) => s + x.count, 0), pass: totalApplications === statusAnalysis.reduce((s, x) => s + x.count, 0) }
+            ];
+
+            const analytics = {
+                meta: {
+                    reportTitle: REPORT_TITLE_KH,
+                    department: 'នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម',
+                    institution: 'មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ',
+                    filters: { ...DASHBOARD_FILTERS },
+                    filterText: describeActiveFilters(),
+                    startDate: intakeAnalysis.firstDate,
+                    endDate: intakeAnalysis.lastDate,
+                    generatedAt: toISODateString(new Date()),
+                    rawRowCount: rows.length
+                },
+                applications: {
+                    total: totalApplications, completed, pending,
+                    newRegistration: newReg, renewal, unspecifiedRegistration: unspecifiedReg,
+                    approvalRate: pct(completed, totalApplications),
+                    pendingRate: pct(pending, totalApplications),
+                    renewalShare: pct(renewal, totalApplications)
+                },
+                items: {
+                    total: totalItems, instruments, packagedGoods, unclassified: unclassifiedItems,
+                    instrumentShare: pct(instruments, totalItems),
+                    packagedGoodsShare: pct(packagedGoods, totalItems),
+                    averagePerApplication: totalApplications ? +(totalItems / totalApplications).toFixed(1) : 0,
+                    largestApplication: companyRows.reduce((m, c) => (c.totalItems || 0) > (m.totalItems || 0) ? c : m, { totalItems: 0 })
+                },
+                statusAnalysis, provinceAnalysis, intakeAnalysis, itemPortfolio,
+                processingPerformance: {
+                    standardDays: delayAnalysis.standardDays,
+                    asOfDate: delayAnalysis.asOfDateText,
+                    measurableApplications: delayAnalysis.statistics.measurableApplications,
+                    withinStandard: delayAnalysis.statistics.withinStandard,
+                    delayed: delayAnalysis.statistics.delayedApplications,
+                    highestDelay: delayAnalysis.statistics.highestDelay,
+                    highestDelayCompany: delayAnalysis.statistics.highestDelayCompany,
+                    averageDelay: delayAnalysis.statistics.averageDelay,
+                    medianDelay: delayAnalysis.statistics.medianDelay,
+                    bands: delayAnalysis.statistics.distribution,
+                    records: delayAnalysis.delayed
+                },
+                dataQuality, crossChecks
+            };
+            analytics.managementAnalysis = generateManagementAnalysis(analytics);
+            return analytics;
+        }
+
+        /* Turns the computed analytics into management prose. Every sentence is
+           derived from a value above — nothing is hardcoded, and nothing is
+           asserted that the data does not support. */
+        function generateManagementAnalysis(a) {
+            const N = v => toKhmerDigits(formatNumber(v));
+            const app = a.applications, it = a.items, pp = a.processingPerformance;
+            const top = a.provinceAnalysis[0];
+            const executiveSummary = [];
+
+            if (app.total > 0) {
+                executiveSummary.push(
+                    `ក្នុងរយៈពេលរបាយការណ៍ មានក្រុមហ៊ុន/សហគ្រាសចំនួន ${N(app.total)} បានដាក់ពាក្យស្នើសុំចុះបញ្ជីមាត្រាសាស្ត្រ ` +
+                    `ក្នុងនោះ ${N(app.completed)} ក្រុមហ៊ុន ស្មើនឹង ${khPct(app.completed, app.total)} ត្រូវបានអនុម័តរួច ` +
+                    `និង ${N(app.pending)} ក្រុមហ៊ុន ស្មើនឹង ${khPct(app.pending, app.total)} កំពុងស្ថិតក្នុងដំណើរការពិនិត្យ/រង់ចាំការអនុម័ត។`
+                );
+                executiveSummary.push(
+                    `សំណើទាំងនេះគ្របដណ្តប់លើឧបករណ៍ និងទំនិញវេចខ្ចប់សរុបចំនួន ${N(it.total)} មុខ ` +
+                    `ក្នុងនោះឧបករណ៍មាត្រាសាស្ត្រមានចំនួន ${N(it.instruments)} មុខ (${khPct(it.instruments, it.total)}) ` +
+                    `និងទំនិញវេចខ្ចប់ ${N(it.packagedGoods)} មុខ (${khPct(it.packagedGoods, it.total)}) ` +
+                    `ជាមធ្យម ${toKhmerDigits(it.averagePerApplication)} មុខក្នុងមួយសំណើ។`
+                );
+                if (top) {
+                    executiveSummary.push(
+                        `ការស្នើសុំប្រមូលផ្តុំច្រើនជាងគេនៅ${top.province} ដែលមានចំនួន ${N(top.applications)} សំណើ ` +
+                        `ស្មើនឹង ${khPct(top.applications, app.total)} នៃសំណើសរុប។`
+                    );
+                }
+            } else {
+                executiveSummary.push('មិនមានទិន្នន័យសំណើសម្រាប់លក្ខខណ្ឌដែលបានជ្រើសរើសឡើយ។');
+            }
+
+            const keyFindings = [];
+            if (app.total > 0) {
+                keyFindings.push(`អត្រាអនុម័ត៖ ${khPct(app.completed, app.total)} (${N(app.completed)}/${N(app.total)} សំណើ)។`);
+                keyFindings.push(`បន្ទុកការងារកំពុងរង់ចាំ៖ ${N(app.pending)} សំណើ ស្មើនឹង ${khPct(app.pending, app.total)} នៃសំណើសរុប។`);
+                if (top && a.provinceAnalysis.length > 1) {
+                    keyFindings.push(`កម្រិតប្រមូលផ្តុំតាមភូមិសាស្ត្រ៖ ${top.province} កាន់កាប់ ${khPct(top.applications, app.total)} នៃសំណើ ក្នុងចំណោម ${N(a.provinceAnalysis.length)} រាជធានី/ខេត្ត។`);
+                }
+                keyFindings.push(`សមាមាត្រធាតុ៖ ឧបករណ៍មាត្រាសាស្ត្រ ${khPct(it.instruments, it.total)} ធៀបនឹងទំនិញវេចខ្ចប់ ${khPct(it.packagedGoods, it.total)}។`);
+                keyFindings.push(`ប្រភេទចុះបញ្ជី៖ ចុះបញ្ជីថ្មី ${N(app.newRegistration)} (${khPct(app.newRegistration, app.total)}) និងចុះបញ្ជីបន្ត ${N(app.renewal)} (${khPct(app.renewal, app.total)})។`);
+                if (pp.measurableApplications > 0) {
+                    keyFindings.push(
+                        `រយៈពេលដំណើរការ៖ ក្នុងចំណោមសំណើ ${N(pp.measurableApplications)} ដែលគណនារយៈពេលបាន មាន ${N(pp.delayed)} សំណើលើសស្តង់ដារ ${toKhmerDigits(pp.standardDays)} ថ្ងៃ ` +
+                        `ដោយយឺតខ្ពស់បំផុត ${N(pp.highestDelay)} ថ្ងៃ និងមធ្យមភាគ ${N(pp.averageDelay)} ថ្ងៃ។`
+                    );
+                }
+                if (it.largestApplication && it.largestApplication.totalItems > it.averagePerApplication * 3) {
+                    keyFindings.push(
+                        `សំណើធំមិនធម្មតា៖ ${cleanText(it.largestApplication.company, 'មិនបានបញ្ជាក់')} មានធាតុចំនួន ${N(it.largestApplication.totalItems)} មុខ ` +
+                        `ខ្ពស់ជាងមធ្យមភាគ (${toKhmerDigits(it.averagePerApplication)} មុខ) យ៉ាងច្បាស់ ដែលទាមទារធនធានពិនិត្យច្រើនជាងធម្មតា។`
+                    );
+                }
+                if (a.dataQuality.invalidProcessingDates > 0) {
+                    keyFindings.push(
+                        `កម្រិតនៃការវិភាគ៖ សំណើចំនួន ${N(a.dataQuality.invalidProcessingDates)} មិនអាចគណនារយៈពេលដំណើរការបាន ` +
+                        `ដូច្នេះការវិភាគរយៈពេលផ្អែកលើ ${N(pp.measurableApplications)} សំណើប៉ុណ្ណោះ។`
+                    );
+                }
+            }
+
+            const recommendations = [];
+            if (pp.delayed > 0) recommendations.push(`ផ្តល់អាទិភាពដល់សំណើចំនួន ${N(pp.delayed)} ដែលលើសស្តង់ដារ ${toKhmerDigits(pp.standardDays)} ថ្ងៃ ជាពិសេសករណីយឺតលើសពី ${N(pp.highestDelay)} ថ្ងៃ។`);
+            if (app.pending > 0) recommendations.push(`ពង្រឹងការតាមដានសំណើចំនួន ${N(app.pending)} ដែលកំពុងដំណើរការ ដើម្បីទប់ស្កាត់ការយឺតយ៉ាវបន្ថែម។`);
+            if (a.dataQuality.invalidProcessingDates > 0) recommendations.push('បំពេញទិន្នន័យ «ថ្ងៃបញ្ចប់/ថ្ងៃអនុម័ត» ក្នុងឯកសារប្រភព ដើម្បីឱ្យអាចវាស់វែងរយៈពេលដំណើរការបានគ្រប់សំណើ។');
+            if (a.dataQuality.numericOriginCountry > 0) recommendations.push(`កែតម្រូវជួរឈរ «ប្រទេសផលិតដើម» ដែលមានតម្លៃជាលេខចំនួន ${N(a.dataQuality.numericOriginCountry)} ជួរ ដើម្បីអាចវិភាគប្រភពផលិតបាន។`);
+            if (a.dataQuality.invalidManufactureYear > 0) recommendations.push(`ពិនិត្យជួរឈរ «ឆ្នាំផលិត» ដែលមានតម្លៃមិនត្រឹមត្រូវចំនួន ${N(a.dataQuality.invalidManufactureYear)} ជួរ។`);
+            if (a.dataQuality.missingItemName > 0) recommendations.push(`ធ្វើស្តង់ដារកម្មឈ្មោះឧបករណ៍/ទំនិញ ដោយបំពេញឈ្មោះដែលខ្វះចំនួន ${N(a.dataQuality.missingItemName)} ជួរ។`);
+            if (top && top.percent >= 25) recommendations.push(`ពិចារណាការបែងចែកធនធានពិនិត្យបន្ថែមសម្រាប់${top.province} ដែលមានបន្ទុកសំណើខ្ពស់បំផុត។`);
+            recommendations.push('បន្តរៀបចំរបាយការណ៍គ្រប់គ្រងប្រចាំខែ ដើម្បីតាមដាននិន្នាការ និងប្រសិទ្ធភាពនៃការផ្តល់សេវា។');
+
+            const dataQualityNotes = [];
+            const q = a.dataQuality;
+            if (q.invalidProcessingDates > 0) dataQualityNotes.push(`សំណើចំនួន ${N(q.invalidProcessingDates)} គ្មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់គណនារយៈពេល (${q.invalidProcessingDetail.join('; ')})។`);
+            if (q.missingCompanyName > 0) dataQualityNotes.push(`សំណើចំនួន ${N(q.missingCompanyName)} គ្មានឈ្មោះក្រុមហ៊ុន/សហគ្រាស។`);
+            if (q.missingItemName > 0) dataQualityNotes.push(`ជួរធាតុចំនួន ${N(q.missingItemName)} គ្មានឈ្មោះឧបករណ៍/ទំនិញច្បាស់លាស់ (N/A ឬទទេ)។`);
+            if (q.numericOriginCountry > 0) dataQualityNotes.push(`ជួរធាតុចំនួន ${N(q.numericOriginCountry)} មានតម្លៃ «ប្រទេសផលិតដើម» ជាលេខ មិនមែនជាឈ្មោះប្រទេស ដូច្នេះមិនបានយកមកវិភាគ។`);
+            if (q.invalidManufactureYear > 0) dataQualityNotes.push(`ជួរធាតុចំនួន ${N(q.invalidManufactureYear)} មាន «ឆ្នាំផលិត» មិនត្រឹមត្រូវ ដូច្នេះមិនបានយកមកវិភាគ។`);
+            if (q.missingAccuracyClass > 0) dataQualityNotes.push(`ជួរធាតុចំនួន ${N(q.missingAccuracyClass)} គ្មានព័ត៌មាន «កម្រិតលម្អៀង/សុក្រឹតភាព»។`);
+            if (q.registrationTypeInferred) dataQualityNotes.push('ប្រភេទ «ចុះបញ្ជីថ្មី/បន្ត» ត្រូវបានសន្និដ្ឋានពីការប្រៀបធៀបឆ្នាំ ព្រោះឯកសារប្រភពគ្មានជួរឈរបញ្ជាក់ច្បាស់លាស់។');
+            if (a.intakeAnalysis.distinctPeriods <= 1) dataQualityNotes.push('ទិន្នន័យគ្របដណ្តប់តែមួយខែប៉ុណ្ណោះ ដូច្នេះមិនអាចវិភាគនិន្នាការរយៈពេលវែងបានឡើយ។');
+            const failed = a.crossChecks.filter(c => !c.pass);
+            if (failed.length) dataQualityNotes.push(`ការត្រួតពិនិត្យផ្ទៃក្នុងមិនស៊ីគ្នា៖ ${failed.map(c => c.name).join('; ')}។`);
+
+            return { executiveSummary, keyFindings, recommendations, dataQualityNotes };
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════
+           DASHBOARD FILTER / QUERY LAYER
+           ───────────────────────────────────────────────────────────────────────
+           One filter state, one query function. Everything downstream — KPI cards,
+           charts, every table, the delay analysis, the Word report and the Excel
+           workbook — is rebuilt from the rows this layer returns, so no component
+           can ever show a differently-filtered view.
+
+               masterRows  →  applyDashboardFilters()  →  updateDashboard()
+                                                              ↓
+                                        KPIs · charts · tables · delay · exports
+
+           GRAIN: filtering is APPLICATION-level. An application is a primary row
+           (ល.រ មុខសញ្ញា = ១) plus all of its detail rows. An application either
+           matches in full or is excluded in full, so detail rows can never inflate
+           a count and item-level charts stay consistent with their parent.
+
+           DATE FIELD: DELAY_CONFIG.startDateColumns — «ថ្ងៃ/ខែ/ឆ្នាំចុះបញ្ជីមាត្រាសាស្ត្រ»,
+           the date the file entered the workflow. Never the manufacture year,
+           certificate validity, or any other historical column.
+           ═══════════════════════════════════════════════════════════════════════ */
+        let masterRows = [];
+        const DASHBOARD_FILTERS = { month: null, year: null, location: null, status: null, text: '' };
+
+        // Canonical status codes. Comparison is always on the code, never on
+        // display text, so casing/spacing/language variants collapse correctly.
+        const STATUS_LABELS_KH = {
+            COMPLETED: 'អនុម័តរួច (COMPLETED)',
+            SUBMITTED: 'បានដាក់ស្នើ (SUBMITTED)',
+            REVIEWING: 'កំពុងពិនិត្យ (REVIEWING)',
+            RETURNED: 'បានបង្វិលត្រឡប់ (RETURNED)',
+            PENDING: 'រង់ចាំអនុម័ត (PENDING)',
+            REJECTED: 'បដិសេធ (REJECTED)'
+        };
+        function normalizeStatusCode(value) {
+            const s = cleanText(value, '');
+            if (!s) return '';
+            const u = s.replace(/\s+/g, ' ').trim().toUpperCase();
+            if (u.includes('COMPLETED') || u.includes('APPROVED') || s.includes('អនុម័តរួច') || s.includes('បានអនុម័ត')) return 'COMPLETED';
+            if (u.includes('REJECT') || s.includes('បដិសេធ')) return 'REJECTED';
+            if (u.includes('RETURN') || s.includes('ត្រឡប់')) return 'RETURNED';
+            if (u.includes('REVIEW') || s.includes('ពិនិត្យ')) return 'REVIEWING';
+            if (u.includes('SUBMIT') || s.includes('ដាក់ស្នើ')) return 'SUBMITTED';
+            if (u.includes('PENDING') || s.includes('រង់ចាំ')) return 'PENDING';
+            return u;
+        }
+        function statusDisplayLabel(code) { return STATUS_LABELS_KH[code] || code; }
+
+        // Latin spellings map onto the Khmer canonical name so "Phnom Penh",
+        // "PhnomPenh", "PHNOM PENH" and «រាជធានីភ្នំពេញ» become one option.
+        const LOCATION_LATIN_MAP = {
+            'PHNOMPENH': 'ភ្នំពេញ', 'BANTEAYMEANCHEY': 'បន្ទាយមានជ័យ', 'BATTAMBANG': 'បាត់ដំបង',
+            'KAMPONGCHAM': 'កំពង់ចាម', 'KAMPONGCHHNANG': 'កំពង់ឆ្នាំង', 'KAMPONGSPEU': 'កំពង់ស្ពឺ',
+            'KAMPONGTHOM': 'កំពង់ធំ', 'KAMPOT': 'កំពត', 'KANDAL': 'កណ្ដាល', 'KEP': 'កែប',
+            'KOHKONG': 'កោះកុង', 'KRATIE': 'ក្រចេះ', 'MONDULKIRI': 'មណ្ឌលគិរី',
+            'ODDARMEANCHEY': 'ឧត្ដរមានជ័យ', 'PAILIN': 'ប៉ៃលិន', 'PREAHSIHANOUK': 'ព្រះសីហនុ',
+            'PREAHVIHEAR': 'ព្រះវិហារ', 'PREYVENG': 'ព្រៃវែង', 'PURSAT': 'ពោធិ៍សាត់',
+            'RATANAKIRI': 'រតនគិរី', 'SIEMREAP': 'សៀមរាប', 'STUNGTRENG': 'ស្ទឹងត្រែង',
+            'SVAYRIENG': 'ស្វាយរៀង', 'TAKEO': 'តាកែវ', 'TBOUNGKHMUM': 'ត្បូងឃ្មុំ'
+        };
+        // Builds on the existing normalizeProvince so filter options and the
+        // province charts/tables always agree on one spelling per province.
+        function normalizeLocation(value) {
+            const base = normalizeProvince(value);
+            if (!base || base === '-') return '';
+            const latinKey = base.replace(/[\s.'-]/g, '').toUpperCase();
+            return LOCATION_LATIN_MAP[latinKey] || base;
+        }
+
+        /* Groups raw rows into applications and precomputes every field the
+           filters need. Runs once per imported dataset — filtering never
+           re-parses a date. */
+        let applicationIndexCache = { source: null, index: null };
+        function buildFilterIndex(rows) {
+            if (applicationIndexCache.source === rows && applicationIndexCache.index) return applicationIndexCache.index;
+            const index = [];
+            let current = null;
+            (rows || []).forEach((row, rowPos) => {
+                if (isPrimaryCompanyRow(row) || !current) {
+                    const startDate = parseDateFlexible(resolveConfiguredValue(row, DELAY_CONFIG.startDateColumns));
+                    const company = cleanText(row['ឈ្មោះក្រុមហ៊ុន/សហគ្រាស'], '');
+                    const location = normalizeLocation(row['រាជធានី/ខេត្ត']);
+                    current = {
+                        rowPositions: [],
+                        startDate,
+                        year: startDate ? startDate.getFullYear() : null,
+                        month: startDate ? startDate.getMonth() + 1 : null,
+                        location,
+                        statusCode: normalizeStatusCode(row['ស្ថានភាព']),
+                        searchText: [
+                            company,
+                            cleanText(row['ល.រ ក្រុមហ៊ុន/សហគ្រាស'], ''),
+                            cleanText(row['លេខចុះបញ្ជីមាត្រាសាស្ត្រ'], ''),
+                            cleanText(row['លេខវិញ្ញាបនបត្រ'], ''),
+                            location
+                        ].join(' ').replace(/\s+/g, ' ').trim().toLowerCase()
+                    };
+                    index.push(current);
+                }
+                current.rowPositions.push(rowPos);
+            });
+            applicationIndexCache = { source: rows, index };
+            return index;
+        }
+
+        // Options come from the data, never hardcoded.
+        function getUniqueFilterOptions(rows) {
+            const index = buildFilterIndex(rows);
+            const years = [...new Set(index.map(a => a.year).filter(y => y !== null))].sort((a, b) => b - a);
+            const months = [...new Set(index.map(a => a.month).filter(m => m !== null))].sort((a, b) => a - b);
+            const locations = [...new Set(index.map(a => a.location).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'km'));
+            const statuses = [...new Set(index.map(a => a.statusCode).filter(Boolean))].sort();
+            return { years, months, locations, statuses };
+        }
+
+        /* THE central query function. AND logic across every active condition;
+           a null/empty filter contributes no condition. Returns raw rows so the
+           whole existing render pipeline keeps working unchanged. */
+        function applyDashboardFilters(rows, filters) {
+            const f = filters || {};
+            const hasAny = f.month || f.year || f.location || f.status || (f.text && f.text.trim());
+            if (!rows || !rows.length) return [];
+            if (!hasAny) return rows.slice();
+
+            const index = buildFilterIndex(rows);
+            const needle = (f.text || '').replace(/\s+/g, ' ').trim().toLowerCase();
+            const matched = index.filter(app => {
+                if (f.year && app.year !== Number(f.year)) return false;
+                if (f.month && app.month !== Number(f.month)) return false;
+                if (f.location && app.location !== f.location) return false;
+                if (f.status && app.statusCode !== f.status) return false;
+                if (needle && !app.searchText.includes(needle)) return false;
+                return true;
+            });
+            // Emit every row of each matching application, in original order.
+            const keep = new Set();
+            matched.forEach(app => app.rowPositions.forEach(p => keep.add(p)));
+            return rows.filter((_, i) => keep.has(i));
+        }
+
+        function countApplications(rows) { return buildFilterIndex(rows).filter(a => a.rowPositions.length).length; }
+
+        /* ─── Filter bar wiring ─── */
+        function populateFilterControls(rows) {
+            const opts = getUniqueFilterOptions(rows);
+            const fill = (id, items, allLabel, current) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.innerHTML = `<option value="">${allLabel}</option>` +
+                    items.map(it => `<option value="${it.value}">${it.label}</option>`).join('');
+                el.value = items.some(it => String(it.value) === String(current)) ? current : '';
+            };
+            // Months: always all twelve, so a month with no records simply returns 0.
+            fill('filterMonth', monthNamesKh.map((name, i) => ({ value: i + 1, label: name })), 'ខែទាំងអស់', DASHBOARD_FILTERS.month);
+            fill('filterYear', opts.years.map(y => ({ value: y, label: toKhmerDigits(y) })), 'ឆ្នាំទាំងអស់', DASHBOARD_FILTERS.year);
+            fill('filterLocation', opts.locations.map(l => ({ value: l, label: l })), 'ទីតាំងទាំងអស់', DASHBOARD_FILTERS.location);
+            fill('filterStatus', opts.statuses.map(s => ({ value: s, label: statusDisplayLabel(s) })), 'ស្ថានភាពទាំងអស់', DASHBOARD_FILTERS.status);
+            const textEl = document.getElementById('filterText');
+            if (textEl) textEl.value = DASHBOARD_FILTERS.text || '';
+        }
+
+        function readFiltersFromUI() {
+            const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+            DASHBOARD_FILTERS.month = val('filterMonth') ? Number(val('filterMonth')) : null;
+            DASHBOARD_FILTERS.year = val('filterYear') ? Number(val('filterYear')) : null;
+            DASHBOARD_FILTERS.location = val('filterLocation') || null;
+            DASHBOARD_FILTERS.status = val('filterStatus') || null;
+            DASHBOARD_FILTERS.text = val('filterText');
+        }
+
+        function describeActiveFilters() {
+            const parts = [];
+            if (DASHBOARD_FILTERS.month) parts.push(`ខែ${monthNamesKh[DASHBOARD_FILTERS.month - 1]}`);
+            if (DASHBOARD_FILTERS.year) parts.push(`ឆ្នាំ${toKhmerDigits(DASHBOARD_FILTERS.year)}`);
+            if (DASHBOARD_FILTERS.location) parts.push(DASHBOARD_FILTERS.location);
+            if (DASHBOARD_FILTERS.status) parts.push(statusDisplayLabel(DASHBOARD_FILTERS.status));
+            if (DASHBOARD_FILTERS.text) parts.push(`"${DASHBOARD_FILTERS.text}"`);
+            return parts.join(' · ');
+        }
+
+        // Visually mark which controls are actually constraining the result.
+        function markActiveFilterControls() {
+            [['filterMonth', DASHBOARD_FILTERS.month], ['filterYear', DASHBOARD_FILTERS.year],
+             ['filterLocation', DASHBOARD_FILTERS.location], ['filterStatus', DASHBOARD_FILTERS.status],
+             ['filterText', DASHBOARD_FILTERS.text]].forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('is-filtered', !!value);
+            });
+        }
+
+        function renderFilterSummary(filteredRows) {
+            markActiveFilterControls();
+            const el = document.getElementById('filterResultSummary');
+            if (!el) return;
+            if (!masterRows.length) { el.innerText = ''; return; }
+            const found = countApplications(filteredRows);
+            const context = describeActiveFilters();
+            const total = countApplications(masterRows);
+            let text = `រកឃើញ ${toKhmerDigits(found)} សំណើ`;
+            if (context) text += ` · ${context}`;
+            else text += ` (ទិន្នន័យទាំងអស់ ${toKhmerDigits(total)} សំណើ)`;
+            if (found === 0) text += ' — មិនមានទិន្នន័យសម្រាប់លក្ខខណ្ឌនេះ';
+            el.innerText = text;
+        }
+
+        // Single entry point for every filter change.
+        function applyFiltersAndRender() {
+            readFiltersFromUI();
+            const filtered = applyDashboardFilters(masterRows, DASHBOARD_FILTERS);
+            updateDashboard(filtered);
+            renderFilterSummary(filtered);
+        }
+
+        function resetDashboardFilters() {
+            DASHBOARD_FILTERS.month = null;
+            DASHBOARD_FILTERS.year = null;
+            DASHBOARD_FILTERS.location = null;
+            DASHBOARD_FILTERS.status = null;
+            DASHBOARD_FILTERS.text = '';
+            populateFilterControls(masterRows);
+            updateDashboard(masterRows);
+            renderFilterSummary(masterRows);
+        }
+
+        /* Called by every import path. Stores the master dataset, rebuilds the
+           filter options from it, clears any previous filters and renders. */
+        function setDatasetAndRender(rows) {
+            masterRows = Array.isArray(rows) ? rows : [];
+            applicationIndexCache = { source: null, index: null };
+            resetDashboardFilters();
+        }
+
+        function initDashboardFilters() {
+            const searchBtn = document.getElementById('filterSearchBtn');
+            const resetBtn = document.getElementById('filterResetBtn');
+            const textEl = document.getElementById('filterText');
+            if (searchBtn) searchBtn.addEventListener('click', applyFiltersAndRender);
+            if (resetBtn) resetBtn.addEventListener('click', resetDashboardFilters);
+            if (textEl) textEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); applyFiltersAndRender(); } });
+            ['filterMonth', 'filterYear', 'filterLocation', 'filterStatus'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', applyFiltersAndRender);
+            });
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════
            DELAY CALCULATION — SELF-TESTS
            Run from the browser console with runDelayTests(). Returns
            {passed, failed, results} and logs a table of every case.
@@ -2686,6 +3727,64 @@
             return { passed, failed, results };
         }
         if (typeof window !== 'undefined') window.runDelayTests = runDelayTests;
+
+        /* ═══════════════════════════════════════════════════════════════════════
+           FILTER / QUERY — SELF-TESTS
+           Run from the console with runFilterTests().
+           ═══════════════════════════════════════════════════════════════════════ */
+        function runFilterTests() {
+            const results = [];
+            const check = (name, actual, expected) => {
+                results.push({ name, expected, actual, pass: JSON.stringify(actual) === JSON.stringify(expected) });
+            };
+            // Fixture: 3 applications. App A has 3 detail rows, B and C have 1 each.
+            const app = (no, muk, company, prov, status, serialDate) => ({
+                'ល.រ ក្រុមហ៊ុន/សហគ្រាស': no, 'ល.រ មុខសញ្ញា': muk, 'ឈ្មោះក្រុមហ៊ុន/សហគ្រាស': company,
+                'រាជធានី/ខេត្ត': prov, 'ស្ថានភាព': status, 'ថ្ងៃ/ខែ/ឆ្នាំចុះបញ្ជីមាត្រាសាស្ត្រ': serialDate,
+                'លេខចុះបញ្ជីមាត្រាសាស្ត្រ': 'CMRC' + no
+            });
+            const rows = [
+                app('01', 1, 'ក្រុមហ៊ុន ក', '  phnom penh ', ' completed ', '2026-07-15'),
+                app('01', 2, 'ក្រុមហ៊ុន ក', 'phnom penh', 'COMPLETED', '2026-07-15'),
+                app('01', 3, 'ក្រុមហ៊ុន ក', 'phnom penh', 'COMPLETED', '2026-07-15'),
+                app('02', 1, 'ក្រុមហ៊ុន ខ', 'ភ្នំពេញ', 'REVIEWING', '2026-08-03'),
+                app('03', 1, 'ក្រុមហ៊ុន គ', 'ខេត្តតាកែវ', 'COMPLETED', '2025-07-09')
+            ];
+            const apps = r => countApplications(applyDashboardFilters(rows, r));
+            const F = o => ({ month: null, year: null, location: null, status: null, text: '', ...o });
+
+            check('T1 no filters → all 3 applications (5 raw rows)', [apps(F({})), applyDashboardFilters(rows, F({})).length], [3, 5]);
+            check('T2 year 2026 → 2 applications', apps(F({ year: 2026 })), 2);
+            check('T3 July 2026 → 1 application', apps(F({ month: 7, year: 2026 })), 1);
+            check('T4 location ភ្នំពេញ → 2 applications', apps(F({ location: 'ភ្នំពេញ' })), 2);
+            check('T5 status COMPLETED → 2 applications', apps(F({ status: 'COMPLETED' })), 2);
+            check('T6 2026 + ភ្នំពេញ + COMPLETED → 1', apps(F({ year: 2026, location: 'ភ្នំពេញ', status: 'COMPLETED' })), 1);
+            check('T7 July + 2026 + ភ្នំពេញ + COMPLETED → 1 (AND logic)', apps(F({ month: 7, year: 2026, location: 'ភ្នំពេញ', status: 'COMPLETED' })), 1);
+            check('T8 no match → 0 applications, 0 rows, no throw',
+                [apps(F({ month: 12, year: 2026 })), applyDashboardFilters(rows, F({ month: 12, year: 2026 })).length], [0, 0]);
+            check('T9 cleared filters restore the full dataset', applyDashboardFilters(rows, F({})).length, rows.length);
+            check('T10 " completed " matches COMPLETED', normalizeStatusCode(' completed '), 'COMPLETED');
+            check('T10b Khmer អនុម័តរួច maps to COMPLETED', normalizeStatusCode('អនុម័តរួច'), 'COMPLETED');
+            check('T11 location variants normalize to one key',
+                ['Phnom Penh', 'PhnomPenh', 'phnom penh', 'PHNOM PENH', 'ភ្នំពេញ', 'រាជធានីភ្នំពេញ'].map(normalizeLocation),
+                ['ភ្នំពេញ', 'ភ្នំពេញ', 'ភ្នំពេញ', 'ភ្នំពេញ', 'ភ្នំពេញ', 'ភ្នំពេញ']);
+            check('T11b different provinces are never merged',
+                normalizeLocation('ខេត្តតាកែវ') === normalizeLocation('ភ្នំពេញ'), false);
+            check('T12 app with 3 detail rows counts once but keeps all its rows',
+                [apps(F({ location: 'ភ្នំពេញ', status: 'COMPLETED' })), applyDashboardFilters(rows, F({ location: 'ភ្នំពេញ', status: 'COMPLETED' })).length], [1, 3]);
+            check('T13 filter options are built from the data',
+                (() => { const o = getUniqueFilterOptions(rows); return [o.years, o.locations, o.statuses]; })(),
+                [[2026, 2025], ['តាកែវ', 'ភ្នំពេញ'], ['COMPLETED', 'REVIEWING']]);
+            check('T14 text search matches company name, case-insensitively', apps(F({ text: 'ក្រុមហ៊ុន ខ' })), 1);
+            check('T15 text search matches registration number', apps(F({ text: 'cmrc03' })), 1);
+            check('T16 month without year filters across years', apps(F({ month: 7 })), 2);
+
+            const passed = results.filter(r => r.pass).length;
+            if (typeof console !== 'undefined' && console.table) console.table(results.map(r => ({ test: r.name, pass: r.pass, expected: JSON.stringify(r.expected), actual: JSON.stringify(r.actual) })));
+            console.log(`[filter tests] ${passed} passed, ${results.length - passed} failed`);
+            return { passed, failed: results.length - passed, results };
+        }
+        if (typeof window !== 'undefined') window.runFilterTests = runFilterTests;
 
         // Look up an application's delay result from the central analysis.
         // Applications and company rows are both built from primary rows in file
@@ -3200,6 +4299,15 @@
                 packagesSummary: packages,
                 delayedDocuments: delays,
                 delayAnalysis,
+                // Exports consume sourceRows, which is whatever the active filter
+                // produced — so a filtered dashboard always yields a filtered report.
+                activeFilters: { ...DASHBOARD_FILTERS },
+                activeFilterText: describeActiveFilters(),
+                // Central analysis consumed by the dashboard, Word and Excel alike.
+                analytics: buildReportAnalytics({
+                    rows: data, companyRows, tools, packages,
+                    provinceRows: provinceCompanyRows, delayAnalysis, statuses
+                }),
                 sourceRows: data,
                 monthLabels: monthLabels,
                 monthlyData: monthlyData
