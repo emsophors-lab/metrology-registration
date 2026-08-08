@@ -50,21 +50,330 @@
             background: #475569;
         }
 
-        /* Sidebar Collapsed Styles */
-        #sidebar.sidebar-collapsed {
-            width: 4.5rem !important; /* 72px */
+        /* ═══════════════════════════════════════════════════════════════
+           SIDEBAR DESIGN SYSTEM
+           Single source of truth for sidebar width & appearance.
+           Do not hardcode sidebar widths anywhere else.
+           ═══════════════════════════════════════════════════════════════ */
+        :root {
+            --sidebar-expanded-width: 260px;
+            --sidebar-collapsed-width: 72px;
+            --sidebar-bg: #081426;
+            --sidebar-bg-elevated: #0b1a30;
+            --sidebar-border: rgba(148, 163, 184, 0.14);
+            --sidebar-divider: rgba(148, 163, 184, 0.09);
+            --sidebar-item-height: 46px;
+            --sidebar-item-radius: 8px;
+            --sidebar-gutter: 8px;
+            --sidebar-fg: #9db0cb;
+            --sidebar-fg-hover: #e4ecf8;
+            --sidebar-fg-active: #ffffff;
+            --sidebar-fg-muted: #7d92b3; /* >=4.5:1 on --sidebar-bg (WCAG AA) */
+            --sidebar-accent: #3b82f6;
+            --sidebar-hover-bg: rgba(255, 255, 255, 0.06);
+            --sidebar-active-bg: rgba(37, 99, 235, 0.18);
+            --sidebar-duration: 200ms;
         }
-        #sidebar.sidebar-collapsed .sidebar-text,
-        #sidebar.sidebar-collapsed .sidebar-brand-text {
-            display: none !important;
+
+        /* App shell — sidebar is a flex sibling of the workspace pane */
+        .app-shell {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
         }
-        #sidebar.sidebar-collapsed .nav-item {
-            justify-content: center !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
+
+        /* ─── Sidebar container ─── */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            width: var(--sidebar-expanded-width);
+            /* flex items default to min-width:auto, which would clamp the
+               collapsed width up to the content's min-content size */
+            min-width: 0;
+            height: 100vh;
+            height: 100dvh;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--sidebar-border);
+            color: var(--sidebar-fg);
+            /* Khmer UI font already loaded by the project — never the decorative Moul face */
+            font-family: 'Siemreap', 'Khmer', system-ui, sans-serif;
+            transform: translateX(-100%);
+            transition: transform var(--sidebar-duration) ease,
+                        width var(--sidebar-duration) ease;
         }
-        #sidebar.sidebar-collapsed #toggleIcon {
-            transform: rotate(180deg);
+        .sidebar.is-open { transform: translateX(0); }
+
+        @media (min-width: 768px) {
+            .sidebar {
+                position: relative;
+                z-index: auto;
+                transform: none;
+            }
+            .sidebar.is-collapsed { width: var(--sidebar-collapsed-width); }
+        }
+        /* Collapsed is a desktop-only affordance — the mobile drawer is
+           always full width, even if the desktop state is persisted as collapsed. */
+
+        /* ─── Header ─── */
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            height: 60px;
+            padding: 0 14px;
+            border-bottom: 1px solid var(--sidebar-border);
+            background: var(--sidebar-bg-elevated);
+        }
+        @media (min-width: 768px) {
+            .sidebar.is-collapsed .sidebar-header {
+                justify-content: center;
+                padding: 0;
+            }
+        }
+        .sidebar-logo {
+            flex-shrink: 0;
+            height: 34px;
+            width: 34px;
+            padding: 2px;
+            border-radius: 9px;
+            background: #fff;
+            object-fit: contain;
+        }
+        .sidebar-brand-text { min-width: 0; }
+        .sidebar-brand-title {
+            font-size: 12.5px;
+            font-weight: 700;
+            line-height: 1.45;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar-brand-sub {
+            font-size: 9.5px;
+            font-weight: 500;
+            line-height: 1.45;
+            letter-spacing: 0.04em;
+            color: #7fa5d9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ─── Navigation area (only this region scrolls) ─── */
+        .sidebar-nav {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 6px 0 10px;
+        }
+        .sidebar-section + .sidebar-section { margin-top: 2px; }
+        @media (min-width: 768px) {
+            .sidebar.is-collapsed .sidebar-section + .sidebar-section {
+                margin-top: 8px;
+                padding-top: 8px;
+                border-top: 1px solid var(--sidebar-divider);
+            }
+        }
+        .sidebar-section-title {
+            padding: 14px 17px 6px;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--sidebar-fg-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ─── Navigation item ─── */
+        .nav-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            min-height: var(--sidebar-item-height);
+            margin: 2px var(--sidebar-gutter);
+            padding: 0 14px;
+            border-left: 3px solid transparent;
+            border-radius: var(--sidebar-item-radius);
+            color: var(--sidebar-fg);
+            font-size: 14.5px;
+            font-weight: 500;
+            line-height: 1.5;
+            text-decoration: none;
+            transition: background-color 150ms ease, color 150ms ease;
+        }
+        .nav-item:hover {
+            background: var(--sidebar-hover-bg);
+            color: var(--sidebar-fg-hover);
+        }
+        .nav-item:focus-visible {
+            outline: 2px solid #60a5fa;
+            outline-offset: -2px;
+        }
+        .nav-item.is-active {
+            background: var(--sidebar-active-bg);
+            border-left-color: var(--sidebar-accent);
+            color: var(--sidebar-fg-active);
+        }
+        .nav-item.is-active .nav-icon { color: var(--sidebar-accent); }
+        .nav-icon {
+            flex: 0 0 19px;
+            width: 19px;
+            height: 19px;
+            stroke-width: 1.8;
+            color: inherit;
+        }
+        .nav-label {
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        /* ─── Collapsed state (desktop only) ─── */
+        @media (min-width: 768px) {
+            .sidebar.is-collapsed .nav-label,
+            .sidebar.is-collapsed .sidebar-section-title,
+            .sidebar.is-collapsed .sidebar-brand-text,
+            .sidebar.is-collapsed .sidebar-meta { display: none; }
+            .sidebar.is-collapsed .nav-item {
+                justify-content: center;
+                margin: 2px 10px;
+                padding: 0;
+                border-left-width: 0;
+            }
+            .sidebar.is-collapsed .nav-item.is-active {
+                box-shadow: inset 3px 0 0 var(--sidebar-accent);
+            }
+            .sidebar.is-collapsed .sidebar-collapse-btn { justify-content: center; padding: 0; }
+            .sidebar.is-collapsed .sidebar-collapse-label { display: none; }
+            .sidebar.is-collapsed .sidebar-collapse-icon { transform: rotate(180deg); }
+        }
+
+        /* ─── Footer ─── */
+        .sidebar-footer {
+            margin-top: auto;
+            flex-shrink: 0;
+            padding: 8px 0 10px;
+            border-top: 1px solid var(--sidebar-border);
+            background: var(--sidebar-bg);
+        }
+        .sidebar-collapse-btn {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            width: calc(100% - var(--sidebar-gutter) * 2);
+            min-height: 38px;
+            margin: 4px var(--sidebar-gutter) 0;
+            padding: 0 14px;
+            border: 0;
+            border-radius: var(--sidebar-item-radius);
+            background: transparent;
+            color: var(--sidebar-fg-muted);
+            font: inherit;
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 150ms ease, color 150ms ease;
+        }
+        .sidebar-collapse-btn:hover {
+            background: var(--sidebar-hover-bg);
+            color: var(--sidebar-fg-hover);
+        }
+        .sidebar-collapse-btn:focus-visible {
+            outline: 2px solid #60a5fa;
+            outline-offset: -2px;
+        }
+        .sidebar-collapse-icon {
+            flex: 0 0 17px;
+            width: 17px;
+            height: 17px;
+            stroke-width: 1.8;
+            transition: transform var(--sidebar-duration) ease;
+        }
+        .sidebar-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 6px var(--sidebar-gutter) 0;
+            padding: 8px 6px 0;
+            border-top: 1px solid var(--sidebar-divider);
+            font-size: 9.5px;
+            color: var(--sidebar-fg-muted);
+        }
+        .sidebar-version {
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: rgba(37, 99, 235, 0.18);
+            color: #7fa5d9;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 9px;
+        }
+
+        /* ─── Mobile drawer close button (hidden on desktop) ─── */
+        .sidebar-close-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            height: 32px;
+            width: 32px;
+            margin-left: auto;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--sidebar-fg);
+            cursor: pointer;
+            transition: background-color 150ms ease, color 150ms ease;
+        }
+        .sidebar-close-btn:hover {
+            background: var(--sidebar-hover-bg);
+            color: #fff;
+        }
+        .sidebar-close-btn:focus-visible {
+            outline: 2px solid #60a5fa;
+            outline-offset: -2px;
+        }
+        @media (min-width: 768px) { .sidebar-close-btn { display: none; } }
+
+        /* ─── Backdrop ─── */
+        .sidebar-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 40;
+            background: rgba(0, 0, 0, 0.45);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--sidebar-duration) ease;
+        }
+        .sidebar-backdrop.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        @media (min-width: 768px) { .sidebar-backdrop { display: none; } }
+        /* Scroll lock belongs to the mobile drawer only — it can never
+           leak onto desktop, even if a stale class survives a resize. */
+        @media (max-width: 767.98px) {
+            body.sidebar-drawer-open { overflow: hidden; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .sidebar,
+            .sidebar-backdrop,
+            .sidebar-collapse-icon { transition: none; }
         }
         /* Sticky headers in dashboard tables */
         table th {
@@ -108,115 +417,115 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans antialiased overflow-hidden">
     <!-- Main Flex Shell -->
-    <div class="flex h-screen w-screen overflow-hidden">
+    <div class="app-shell">
         
-        <!-- Left Sidebar — Ultra-Modern Sleek Dark Glass Aesthetics -->
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-20 flex w-60 flex-col bg-slate-950/95 text-slate-300 border-r border-slate-800/80 shadow-2xl backdrop-blur-xl transition-all duration-300 -translate-x-full md:translate-x-0 md:static md:z-auto flex-shrink-0">
-            <!-- Sidebar Brand Header -->
-            <div class="flex h-16 items-center justify-between border-b border-slate-800/70 px-3.5 flex-shrink-0 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950">
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="h-10 w-10 rounded-2xl bg-white p-0.5 shadow-md shadow-blue-500/10 ring-2 ring-blue-500/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        <img src="NMClogo.jpg" alt="NMC Logo" class="h-full w-full object-contain rounded-xl">
-                    </div>
-                    <div class="sidebar-brand-text overflow-hidden">
-                        <h1 class="font-moul text-[11px] text-white truncate leading-tight tracking-wide">មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ</h1>
-                        <p class="text-[9px] font-medium text-blue-400/90 truncate leading-tight mt-0.5 tracking-wider">នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</p>
-                    </div>
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- LEFT SIDEBAR — Header / Navigation / Footer                     -->
+        <!-- Widths come from --sidebar-*-width. Do not hardcode elsewhere.  -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <aside id="sidebar" class="sidebar" aria-label="ម៉ឺនុយរុករកមេ">
+
+            <!-- ─── Sidebar Header (compact; full branding lives in main header) ─── -->
+            <div class="sidebar-header">
+                <img src="NMClogo.jpg" alt="និមិត្តសញ្ញា មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ" class="sidebar-logo">
+                <div class="sidebar-brand-text">
+                    <div class="sidebar-brand-title">មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ</div>
+                    <div class="sidebar-brand-sub">NMC — ប្រព័ន្ធរបាយការណ៍</div>
                 </div>
-                <!-- Collapse/Expand Toggle Button -->
-                <button id="sidebarToggleBtn" title="ពង្រីក/បង្រួម Sidebar" class="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 ring-1 ring-slate-700/50 transition flex-shrink-0">
-                    <svg id="toggleIcon" class="h-4 w-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-                    </svg>
+                <button id="sidebarCloseBtn" type="button" class="sidebar-close-btn" aria-label="បិទម៉ឺនុយ">
+                    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
-            <!-- Navigation Links -->
-            <nav class="flex-1 space-y-1.5 p-3 overflow-y-auto custom-scrollbar">
-                <!-- Section Label -->
-                <div class="sidebar-text px-2 pt-1 pb-1 text-[9.5px] font-bold tracking-wider text-slate-500 uppercase">
-                    ការរុករកទិន្នន័យ (Navigation)
+            <!-- ─── Navigation (the only scrollable region) ─── -->
+            <nav class="sidebar-nav custom-scrollbar" aria-label="ការរុករកទិន្នន័យ">
+
+                <div class="sidebar-section" role="group" aria-labelledby="navSectionMain">
+                    <div class="sidebar-section-title" id="navSectionMain">ការរុករកទិន្នន័យ</div>
+
+                    <a href="#" title="Dashboard" data-nav-link class="nav-item is-active" aria-current="page">
+                        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"/></svg>
+                        <span class="nav-label">Dashboard</span>
+                    </a>
+
+                    <a href="#tableSection" title="ការចុះបញ្ជីមាត្រាសាស្ត្រ" data-nav-link class="nav-item">
+                        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span class="nav-label">ការចុះបញ្ជីមាត្រាសាស្ត្រ</span>
+                    </a>
+
+                    <a href="#recentCompaniesCard" title="ក្រុមហ៊ុន/សហគ្រាស" data-nav-link class="nav-item">
+                        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        <span class="nav-label">ក្រុមហ៊ុន/សហគ្រាស</span>
+                    </a>
+
+                    <a href="#toolsTableCard" title="ឧបករណ៍មាត្រាសាស្ត្រ" data-nav-link class="nav-item">
+                        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <span class="nav-label">ឧបករណ៍មាត្រាសាស្ត្រ</span>
+                    </a>
+
+                    <a href="#packagesTableCard" title="ទំនិញវេចខ្ចប់" data-nav-link class="nav-item">
+                        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-18v10l-8-4m0 0v10l8 4"/></svg>
+                        <span class="nav-label">ទំនិញវេចខ្ចប់</span>
+                    </a>
+
+                    <a href="#delayTableCard" title="ឯកសារយឺត" data-nav-link class="nav-item">
+                        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <span class="nav-label">ឯកសារយឺត</span>
+                    </a>
                 </div>
 
-                <a href="#" title="Dashboard" class="nav-item group relative flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-600/25 to-blue-500/10 border border-blue-500/40 px-3 py-2.5 text-xs font-semibold text-white transition-all shadow-sm shadow-blue-500/10">
-                    <div class="h-7 w-7 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"/></svg>
-                    </div>
-                    <span class="sidebar-text truncate">Dashboard</span>
-                    <span class="sidebar-text ml-auto h-2 w-2 rounded-full bg-blue-400 shadow-sm shadow-blue-400"></span>
-                </a>
+                <div class="sidebar-section" role="group" aria-labelledby="navSectionExport">
+                    <div class="sidebar-section-title" id="navSectionExport">ការទាញយករបាយការណ៍</div>
 
-                <a href="#tableSection" title="ការចុះបញ្ជីមាត្រាសាស្ត្រ" class="nav-item group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-900 hover:text-slate-100 border border-transparent hover:border-slate-800 transition-all">
-                    <div class="h-7 w-7 rounded-lg bg-slate-900 flex items-center justify-center text-slate-400 group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    </div>
-                    <span class="sidebar-text truncate">ការចុះបញ្ជីមាត្រាសាស្ត្រ</span>
-                </a>
+                    <a href="#downloadWordBtn" onclick="downloadWordReport(); return false;" title="ទាញយក Word Report" class="nav-item">
+                        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span class="nav-label">ទាញយក Word</span>
+                    </a>
 
-                <a href="#recentCompaniesCard" title="ក្រុមហ៊ុន/សហគ្រាស" class="nav-item group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-900 hover:text-slate-100 border border-transparent hover:border-slate-800 transition-all">
-                    <div class="h-7 w-7 rounded-lg bg-slate-900 flex items-center justify-center text-slate-400 group-hover:text-teal-400 group-hover:bg-teal-500/10 transition-colors">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                    </div>
-                    <span class="sidebar-text truncate">ក្រុមហ៊ុន/សហគ្រាស</span>
-                </a>
-
-                <a href="#toolsTableCard" title="ឧបករណ៍មាត្រាសាស្ត្រ" class="nav-item group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-900 hover:text-slate-100 border border-transparent hover:border-slate-800 transition-all">
-                    <div class="h-7 w-7 rounded-lg bg-slate-900 flex items-center justify-center text-slate-400 group-hover:text-purple-400 group-hover:bg-purple-500/10 transition-colors">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    </div>
-                    <span class="sidebar-text truncate">ឧបករណ៍មាត្រាសាស្ត្រ</span>
-                </a>
-
-                <a href="#packagesTableCard" title="ទំនិញវេចខ្ចប់" class="nav-item group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-900 hover:text-slate-100 border border-transparent hover:border-slate-800 transition-all">
-                    <div class="h-7 w-7 rounded-lg bg-slate-900 flex items-center justify-center text-slate-400 group-hover:text-amber-400 group-hover:bg-amber-500/10 transition-colors">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-18v10l-8-4m0 0v10l8 4"/></svg>
-                    </div>
-                    <span class="sidebar-text truncate">ទំនិញវេចខ្ចប់</span>
-                </a>
-
-                <a href="#delayTableCard" title="ឯកសារយឺត" class="nav-item group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-900 hover:text-rose-300 border border-transparent hover:border-rose-900/40 transition-all">
-                    <div class="h-7 w-7 rounded-lg bg-slate-900 flex items-center justify-center text-slate-400 group-hover:text-rose-400 group-hover:bg-rose-500/10 transition-colors">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    </div>
-                    <span class="sidebar-text truncate">ឯកសារយឺត</span>
-                </a>
-
-                <!-- Section Divider -->
-                <div class="sidebar-text px-2 pt-3 pb-1 text-[9.5px] font-bold tracking-wider text-slate-500 uppercase">
-                    ការទាញយករបាយការណ៍ (Export)
+                    <a href="#downloadExcelBtn" onclick="downloadExcelReport(); return false;" title="ទាញយក Excel Report" class="nav-item">
+                        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span class="nav-label">ទាញយក Excel</span>
+                    </a>
                 </div>
-
-                <a href="#downloadWordBtn" onclick="downloadWordReport(); return false;" title="ទាញយក Word Report" class="nav-item group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-blue-950/40 hover:text-blue-300 border border-transparent hover:border-blue-800/40 transition-all">
-                    <div class="h-7 w-7 rounded-lg bg-blue-950/60 border border-blue-800/40 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    </div>
-                    <span class="sidebar-text truncate">ទាញយក Word</span>
-                </a>
-                <a href="#downloadExcelBtn" onclick="downloadExcelReport(); return false;" title="ទាញយក Excel Report" class="nav-item group flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-emerald-950/40 hover:text-emerald-300 border border-transparent hover:border-emerald-800/40 transition-all">
-                    <div class="h-7 w-7 rounded-lg bg-emerald-950/60 border border-emerald-800/40 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 01-2 2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    </div>
-                    <span class="sidebar-text truncate">ទាញយក Excel</span>
-                </a>
             </nav>
 
-            <!-- Sidebar Bottom -->
-            <div class="border-t border-slate-800/70 p-3 text-[10px] text-slate-400 font-medium flex-shrink-0 bg-slate-950">
-                <a href="#" onclick="alert('មុខងារនេះនឹងត្រូវបានអភិវឌ្ឍបន្ថែមក្នុងពេលឆាប់ៗខាងមុខ។'); return false;" title="Settings" class="nav-item group flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-all">
-                    <div class="h-7 w-7 rounded-lg bg-slate-900 flex items-center justify-center text-slate-400 group-hover:text-slate-200 transition-colors">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    </div>
-                    <span class="sidebar-text truncate">Settings</span>
+            <!-- ─── Sidebar Footer ─── -->
+            <div class="sidebar-footer">
+                <a href="#" onclick="openAboutDeveloperModal(); return false;" title="Settings / About Developer" class="nav-item">
+                    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span class="nav-label">Settings</span>
                 </a>
-                <div class="sidebar-text pt-2 mt-1 border-t border-slate-800/50 flex justify-between items-center text-[9px] text-slate-500">
+
+                <a href="#" onclick="openAboutDeveloperModal(); return false;" title="About Developer" class="nav-item">
+                    <svg class="nav-icon text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="nav-label">About Developer</span>
+                </a>
+
+                <button id="sidebarCollapseBtn" type="button" class="sidebar-collapse-btn" aria-controls="sidebar" aria-expanded="true" aria-label="បង្រួមម៉ឺនុយ" title="បង្រួម/ពង្រីកម៉ឺនុយ">
+                    <svg class="sidebar-collapse-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                    <span class="sidebar-collapse-label">បង្រួមម៉ឺនុយ</span>
+                </button>
+
+                <div class="sidebar-meta">
                     <span>ប្រព័ន្ធវិភាគមាត្រាសាស្ត្រ</span>
-                    <span class="px-1.5 py-0.5 rounded bg-blue-950 text-blue-400 font-mono text-[8.5px]">v1.2.0</span>
+                    <span class="sidebar-version">v1.2.0</span>
                 </div>
             </div>
         </aside>
 
-        <!-- Sidebar Backdrop (for Mobile) -->
-        <div id="sidebarBackdrop" class="fixed inset-0 z-10 bg-slate-900/40 backdrop-blur-sm hidden md:hidden"></div>
+        <!-- Restore persisted collapse state before first paint (avoids width flash) -->
+        <script>
+            (function () {
+                try {
+                    if (localStorage.getItem('nmc.sidebar.collapsed') === '1') {
+                        document.getElementById('sidebar').classList.add('is-collapsed');
+                    }
+                } catch (e) { /* storage unavailable — fall back to expanded */ }
+            })();
+        </script>
+
+        <!-- Sidebar Backdrop (mobile drawer) -->
+        <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
 
         <!-- Right Hand Workspace Pane -->
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
@@ -764,10 +1073,11 @@
                                         <th class="px-4 py-3">ឈ្មោះក្រុមហ៊ុន/សហគ្រាស</th>
                                         <th class="px-4 py-3">រាជធានី/ខេត្ត</th>
                                         <th class="px-4 py-3">ប្រភេទសំណើ</th>
-                                        <th class="px-4 py-3">ថ្ងៃចុះបញ្ជី</th>
+                                        <th class="px-4 py-3">ថ្ងៃចាប់ផ្ដើម</th>
+                                        <th class="px-4 py-3">ថ្ងៃបញ្ចប់ / ថ្ងៃកំណត់</th>
                                         <th class="px-4 py-3 text-center">ថ្ងៃដំណើរការ</th>
+                                        <th class="px-4 py-3 text-center">ស្តង់ដារ</th>
                                         <th class="px-4 py-3 text-center text-rose-600">យឺតចំនួនថ្ងៃ</th>
-                                        <th class="px-4 py-3">យឺតនៅអ្នកណា</th>
                                         <th class="px-4 py-3 text-center">ស្ថានភាព</th>
                                     </tr>
                                 </thead>
@@ -779,17 +1089,227 @@
             </main>
 
             <!-- Footer Section -->
-            <footer class="h-9 bg-white border-t border-slate-200/80 flex items-center justify-between px-5 text-[9px] text-slate-400 font-bold flex-shrink-0">
-                <span>រក្សាសិទ្ធិ &copy; ២០២៦ មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ &bull; នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</span>
-                <span class="text-slate-300">v1.0.0</span>
+            <footer class="h-10 bg-white border-t border-slate-200/80 flex flex-wrap items-center justify-between px-5 py-2 text-[10px] text-slate-500 font-medium flex-shrink-0 gap-2">
+                <div class="flex items-center gap-2 truncate">
+                    <span>&copy; ២០២៦ មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ &bull; National Metrology Center of Cambodia</span>
+                    <span class="text-slate-300">|</span>
+                    <span class="text-blue-700 font-semibold">Developed by Dr. Sophors Em</span>
+                </div>
+                <div class="flex items-center gap-3 text-[9.5px]">
+                    <button type="button" onclick="openAboutDeveloperModal()" class="text-blue-600 hover:text-blue-800 font-semibold hover:underline flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        About Developer
+                    </button>
+                    <span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-mono text-[9px]">v1.2.0</span>
+                </div>
             </footer>
         </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ABOUT DEVELOPER MODAL DIALOG                                        -->
+    <!-- Formal, official government metrology system profile card           -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div id="aboutDeveloperModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-200" role="dialog" aria-modal="true" aria-labelledby="aboutDevTitle">
+        <div class="bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden transform scale-95 transition-transform duration-200 flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-[#0c1a3a] via-[#0f2147] to-[#0c1a3a] text-white px-6 py-4 flex items-center justify-between border-b border-amber-600/40 relative flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="h-9 w-9 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <div>
+                        <h2 id="aboutDevTitle" class="font-bold text-base text-white tracking-wide leading-tight">About Developer</h2>
+                        <p class="text-[11px] text-blue-200/80 font-medium">System development and technical design</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAboutDeveloperModal()" class="p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition" aria-label="Close modal">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Modal Body (Two column layout desktop, stacked mobile) -->
+            <div class="p-6 sm:p-7 overflow-y-auto space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                    
+                    <!-- Left: Developer Avatar / Portrait -->
+                    <div class="md:col-span-4 flex flex-col items-center justify-center text-center">
+                        <div class="relative group">
+                            <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-gradient-to-br from-[#0c1a3a] via-[#102a5c] to-slate-900 border-2 border-amber-500/50 shadow-xl flex items-center justify-center text-amber-400 font-serif font-bold text-3xl tracking-wider relative overflow-hidden ring-4 ring-blue-900/10">
+                                <!-- Photo image fallback to initials if photo file isn't present -->
+                                <img src="sophors_em.jpg" alt="Dr. Sophors Em" class="w-full h-full object-cover rounded-xl" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-950 to-slate-900 text-amber-300 font-bold text-2xl" style="display:none;">
+                                    Dr. SE
+                                </div>
+                            </div>
+                            <!-- Official Metrology Seal Badge overlay -->
+                            <span class="absolute -bottom-2 -right-2 bg-amber-500 text-slate-950 p-1.5 rounded-full ring-2 ring-white shadow-md" title="National Metrology Center">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Developer Information Hierarchy -->
+                    <div class="md:col-span-8 space-y-3 text-center md:text-left">
+                        <div>
+                            <h3 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-tight">Dr. Sophors Em</h3>
+                            <p class="text-xs sm:text-sm font-bold text-blue-800 font-moul mt-0.5">បណ្ឌិត អែម សុភ័ស</p>
+                        </div>
+
+                        <!-- Main Position -->
+                        <div class="flex items-center gap-2 justify-center md:justify-start text-xs sm:text-sm font-semibold text-slate-700">
+                            <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <span>Director, Department of Industrial Metrology</span>
+                        </div>
+
+                        <!-- Professional Credentials Badges -->
+                        <div class="flex flex-wrap items-center gap-2 justify-center md:justify-start pt-1">
+                            <!-- Senior Metrologist -->
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-900 border border-blue-200/80 shadow-2xs">
+                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Senior Metrologist
+                            </span>
+
+                            <!-- OIML CEEMS Award Recipient -->
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-950 border border-amber-300/80 shadow-2xs">
+                                <svg class="w-3.5 h-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                                OIML CEEMS Award Recipient
+                            </span>
+                        </div>
+
+                        <!-- Organization & Ministry -->
+                        <div class="pt-3 border-t border-slate-100 text-xs sm:text-sm space-y-1">
+                            <div class="flex items-start gap-2 justify-center md:justify-start text-slate-800 font-semibold">
+                                <svg class="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                <span>National Metrology Center of Cambodia</span>
+                            </div>
+                            <p class="text-slate-500 pl-6 text-xs font-medium">Ministry of Industry, Science, Technology & Innovation</p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer / System Credit -->
+            <div class="bg-slate-50 px-6 py-3.5 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 flex-shrink-0">
+                <div class="flex items-center gap-1.5 font-medium">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                    <span>Developed by Dr. Sophors Em</span>
+                </div>
+                <span class="text-[11px] text-slate-400">National Metrology Center of Cambodia</span>
+            </div>
+
+        </div>
+    </div>
     <script>
+        // ═══════════════════════════════════════════════════════════════════
+        // CENTRAL DEVELOPER INFORMATION CONFIGURATION
+        // ═══════════════════════════════════════════════════════════════════
+        const DEVELOPER_INFO = {
+            name: "Dr. Sophors Em",
+            nameKhmer: "បណ្ឌិត អែម សុភ័ស",
+            role: "Director, Department of Industrial Metrology",
+            profession: "Senior Metrologist",
+            recognition: "OIML CEEMS Award Recipient",
+            organization: "National Metrology Center of Cambodia",
+            ministry: "Ministry of Industry, Science, Technology & Innovation",
+            credit: "Developed by Dr. Sophors Em",
+            avatarPath: "sophors_em.jpg"
+        };
+
+        function openAboutDeveloperModal() {
+            const modal = document.getElementById('aboutDeveloperModal');
+            if (!modal) return;
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            const dialog = modal.firstElementChild;
+            if (dialog) dialog.classList.remove('scale-95');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAboutDeveloperModal() {
+            const modal = document.getElementById('aboutDeveloperModal');
+            if (!modal) return;
+            const dialog = modal.firstElementChild;
+            if (dialog) dialog.classList.add('scale-95');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeAboutDeveloperModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('aboutDeveloperModal');
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) closeAboutDeveloperModal();
+                });
+            }
+        });
+
         const embeddedRows = [];
         const defaultCSV = "";
         const SERVICE_MIN_DAYS = 5;
         const SERVICE_MAX_DAYS = 7;
+
+        /* ═══════════════════════════════════════════════════════════════════════
+           DELAY CALCULATION — CONFIGURATION
+           ───────────────────────────────────────────────────────────────────────
+           Official rule: an application is allowed 7 standard processing days.
+           Delay starts only on day 8, so delayDays = MAX(0, processingDays - 7).
+
+           START DATE COLUMN — «ថ្ងៃ/ខែ/ឆ្នាំចុះបញ្ជីមាត្រាសាស្ត្រ»
+             Verified against the source export: present for 100% of applications
+             in every status (COMPLETED / SUBMITTED / REVIEWING / RETURNED), stored
+             as an Excel serial carrying a unique time of day. RETURNED and
+             REVIEWING applications carry this timestamp while their registration
+             number still reads «រង់ចាំការអនុម័ត», so it is the intake date — the
+             moment the file entered the official review process — not an issuance
+             date.
+
+           NOT a processing date — never use as a start or end date:
+             «ថ្ងៃ/ខែ/ឆ្នាំចាប់ផ្ដើមមានសុពលភាព»  certificate validity, spans 2014–2026
+             «ឆ្នាំផលិត»                          year of manufacture (2010/2015/2018…)
+             Both describe instrument/certificate history, not document handling.
+
+           COMPLETION DATE COLUMN
+             Absent from the current export. The resolver below looks for it under
+             the header names the ministry uses; until one is present, COMPLETED
+             applications are reported as “completion date unavailable” and are
+             excluded from delay statistics rather than being given a fabricated
+             end date. Add the real header to the list and it is picked up
+             automatically — no other change required.
+           ═══════════════════════════════════════════════════════════════════════ */
+        const DELAY_CONFIG = {
+            standardDays: SERVICE_MAX_DAYS,
+            // Reporting period under analysis: 08-01-2025 → 07-08-2026.
+            // Still-processing applications are measured to periodEnd, NOT to the
+            // system clock, so re-opening a historical report never inflates delay.
+            // Set reportingAsOfDate to null to derive it from the newest date in
+            // the imported data instead.
+            reportingPeriodStart: '2025-01-08',
+            reportingAsOfDate: '2026-08-07',
+            startDateColumns: [
+                'ថ្ងៃ/ខែ/ឆ្នាំចុះបញ្ជីមាត្រាសាស្ត្រ',
+                'ថ្ងៃ/ខែ/ឆ្នាំទទួលសំណុំឯកសារ',
+                'ថ្ងៃទទួលឯកសារ',
+                'Received Date',
+                'Submission Date'
+            ],
+            completionDateColumns: [
+                'ថ្ងៃ/ខែ/ឆ្នាំអនុម័ត',
+                'ថ្ងៃអនុម័ត',
+                'ថ្ងៃ/ខែ/ឆ្នាំចេញវិញ្ញាបនបត្រ',
+                'ថ្ងៃចេញវិញ្ញាបនបត្រ',
+                'ថ្ងៃបញ្ចប់',
+                'Approval Date',
+                'Completion Date',
+                'Issued Date'
+            ]
+        };
+        const DELAY_INVALID_LABEL = 'ត្រូវពិនិត្យកាលបរិច្ឆេទ';
         let monthlyChartInstance = null, statusChartInstance = null, provinceChartInstance = null, companyProvinceChartInstance = null;
         const EXPORT_FILE_BASENAME = 'របាយការណ៍ចុះបញ្ជីមាត្រាសាស្ត្រ_នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម';
 
@@ -1739,48 +2259,106 @@
             }
             setupExportButtons();
 
-            // Mobile menu drawer toggle & Desktop collapse toggle
-            const menuBtn = document.getElementById('menuBtn');
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('sidebarBackdrop');
-            const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+            // ═══════════════════════════════════════════════════════════
+            // SIDEBAR CONTROLLER
+            // Desktop: collapse/expand (persisted). Mobile: off-canvas drawer.
+            // ═══════════════════════════════════════════════════════════
+            (function initSidebar() {
+                const STORAGE_KEY = 'nmc.sidebar.collapsed';
+                const DESKTOP_QUERY = window.matchMedia('(min-width: 768px)');
 
-            if (sidebarToggleBtn && sidebar) {
-                sidebarToggleBtn.addEventListener('click', () => {
-                    sidebar.classList.toggle('sidebar-collapsed');
-                    if (sidebar.classList.contains('sidebar-collapsed')) {
-                        sidebar.classList.remove('w-52');
-                    } else {
-                        sidebar.classList.add('w-52');
+                const sidebar = document.getElementById('sidebar');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                const collapseBtn = document.getElementById('sidebarCollapseBtn');
+                const closeBtn = document.getElementById('sidebarCloseBtn');
+                const menuBtn = document.getElementById('menuBtn');
+
+                if (!sidebar) return;
+
+                /* ── Collapse / expand (desktop) ── */
+                function applyCollapsed(collapsed) {
+                    sidebar.classList.toggle('is-collapsed', collapsed);
+                    if (collapseBtn) {
+                        collapseBtn.setAttribute('aria-expanded', String(!collapsed));
+                        collapseBtn.setAttribute('aria-label', collapsed ? 'ពង្រីកម៉ឺនុយ' : 'បង្រួមម៉ឺនុយ');
                     }
+                }
+
+                // Sync ARIA with the state restored pre-paint.
+                applyCollapsed(sidebar.classList.contains('is-collapsed'));
+
+                if (collapseBtn) {
+                    collapseBtn.addEventListener('click', () => {
+                        const collapsed = !sidebar.classList.contains('is-collapsed');
+                        applyCollapsed(collapsed);
+                        try {
+                            localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0');
+                        } catch (e) { /* storage unavailable — state is session-only */ }
+                    });
+                }
+
+                /* ── Mobile off-canvas drawer ── */
+                function openDrawer() {
+                    sidebar.classList.add('is-open');
+                    if (backdrop) backdrop.classList.add('is-visible');
+                    document.body.classList.add('sidebar-drawer-open');
+                    if (menuBtn) menuBtn.setAttribute('aria-expanded', 'true');
+                }
+
+                function closeDrawer() {
+                    sidebar.classList.remove('is-open');
+                    if (backdrop) backdrop.classList.remove('is-visible');
+                    document.body.classList.remove('sidebar-drawer-open');
+                    if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+                }
+
+                if (menuBtn) {
+                    menuBtn.setAttribute('aria-controls', 'sidebar');
+                    menuBtn.setAttribute('aria-expanded', 'false');
+                    menuBtn.setAttribute('aria-label', 'បើកម៉ឺនុយ');
+                    menuBtn.addEventListener('click', () => {
+                        if (sidebar.classList.contains('is-open')) closeDrawer();
+                        else openDrawer();
+                    });
+                }
+                if (backdrop) backdrop.addEventListener('click', closeDrawer);
+                if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && sidebar.classList.contains('is-open')) closeDrawer();
                 });
-            }
 
-            if (menuBtn && sidebar && backdrop) {
-                const toggleSidebar = () => {
-                    sidebar.classList.toggle('-translate-x-full');
-                    backdrop.classList.toggle('hidden');
+                // Leaving mobile width must never leave a locked body or an
+                // open drawer behind. Listen on both the media query and resize
+                // so a stale lock is impossible.
+                const syncBreakpoint = () => {
+                    if (DESKTOP_QUERY.matches && sidebar.classList.contains('is-open')) closeDrawer();
                 };
-                menuBtn.addEventListener('click', toggleSidebar);
-                backdrop.addEventListener('click', toggleSidebar);
+                if (typeof DESKTOP_QUERY.addEventListener === 'function') {
+                    DESKTOP_QUERY.addEventListener('change', syncBreakpoint);
+                } else if (typeof DESKTOP_QUERY.addListener === 'function') {
+                    DESKTOP_QUERY.addListener(syncBreakpoint); // Safari < 14
+                }
+                window.addEventListener('resize', syncBreakpoint);
 
-                // Close drawer when sidebar menu items are clicked on mobile
-                sidebar.querySelectorAll('nav a').forEach(link => {
+                /* ── Active item + drawer auto-close on navigation ── */
+                const navLinks = sidebar.querySelectorAll('[data-nav-link]');
+                sidebar.querySelectorAll('a').forEach(link => {
                     link.addEventListener('click', () => {
-                        if (window.innerWidth < 768) {
-                            sidebar.classList.add('-translate-x-full');
-                            backdrop.classList.add('hidden');
-                        }
-                        
-                        // Set active styling
-                        sidebar.querySelectorAll('nav a').forEach(a => {
-                            a.className = 'nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all';
+                        if (!DESKTOP_QUERY.matches) closeDrawer();
+
+                        // Only in-page destinations carry the selected state;
+                        // export/settings actions do not change "where you are".
+                        if (!link.hasAttribute('data-nav-link')) return;
+                        navLinks.forEach(a => {
+                            a.classList.remove('is-active');
+                            a.removeAttribute('aria-current');
                         });
-                        // Highlight clicked
-                        link.className = 'nav-item flex items-center gap-3 rounded-xl bg-blue-600/20 border border-blue-500/30 px-3 py-2.5 text-xs font-bold text-white transition-all';
+                        link.classList.add('is-active');
+                        link.setAttribute('aria-current', 'page');
                     });
                 });
-            }
+            })();
 
             // Drag and drop upload zone support
             const fileInput = document.getElementById('csvFileInput');
@@ -1914,24 +2492,249 @@
             const d = ['០','១','២','៣','៤','៥','៦','៧','៨','៩'];
             return String(value).replace(/[0-9]/g, x => d[x]);
         }
+        // Builds a local midnight Date only when the calendar components are real.
+        // Rejects 2025-02-30, 32/01/2025, month 13, etc. instead of letting the
+        // Date constructor silently roll them over into the next month.
+        function makeCalendarDate(year, month, day) {
+            if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+            if (year < 1900 || year > 2200 || month < 1 || month > 12 || day < 1 || day > 31) return null;
+            const date = new Date(year, month - 1, day);
+            if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+            return date;
+        }
+
+        // Accepts: Date objects, Excel serials (with or without a time fraction),
+        // YYYY-MM-DD, and Cambodian DD/MM/YYYY or DD-MM-YYYY.
+        // Day-first is assumed for the ambiguous d/m/Y form, so 08/01/2025 is
+        // 08 January 2025 — never 01 August 2025.
+        // A bare year ("2018") or a stray number ("42") is NOT a date: the old
+        // `new Date(raw)` fallback turned those manufacture-year cells into
+        // 2018-01-01 / 2042-01-01, which is exactly how non-processing columns
+        // leaked into the delay clock. That fallback is deliberately gone.
         function parseDateFlexible(value) {
             if (value === null || value === undefined || value === '') return null;
-            if (value instanceof Date && !isNaN(value.getTime())) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+            if (value instanceof Date) {
+                return isNaN(value.getTime()) ? null : new Date(value.getFullYear(), value.getMonth(), value.getDate());
+            }
             const raw = String(value).trim();
-            if (!raw || /^N\/?A$/i.test(raw) || /^NA$/i.test(raw)) return null;
+            if (!raw || /^N\/?A$/i.test(raw) || /^-+$/.test(raw)) return null;
+
+            // Excel serial date (1899-12-30 epoch). 20000 ≈ 1954, 80000 ≈ 2119.
             if (/^\d+(\.\d+)?$/.test(raw)) {
                 const serial = parseFloat(raw);
                 if (serial > 20000 && serial < 80000) {
-                    const date = new Date(Math.floor(serial - 25569) * 86400000);
-                    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+                    const utc = new Date(Math.round((serial - 25569) * 86400000));
+                    if (isNaN(utc.getTime())) return null;
+                    // The fractional part is a time of day; keep only the calendar date.
+                    return makeCalendarDate(utc.getUTCFullYear(), utc.getUTCMonth() + 1, utc.getUTCDate());
                 }
+                return null; // bare years and other loose numbers are not dates
             }
-            let m = raw.match(/^(\d{4})[\-/](\d{1,2})[\-/](\d{1,2})/);
-            if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
-            m = raw.match(/^(\d{1,2})[\-/](\d{1,2})[\-/](\d{4})/);
-            if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
-            const parsed = new Date(raw);
-            return isNaN(parsed.getTime()) ? null : new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+
+            let m = raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:[T\s]|$)/);
+            if (m) return makeCalendarDate(+m[1], +m[2], +m[3]);
+
+            m = raw.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})(?:[T\s]|$)/);
+            if (m) {
+                const day = +m[1], month = +m[2];
+                // Day-first (Cambodian). If the first field cannot be a day but the
+                // second can, the file is month-first — swap rather than drop the row.
+                if (day > 12 && month <= 12) return makeCalendarDate(+m[3], month, day);
+                if (month > 12 && day <= 12) return makeCalendarDate(+m[3], day, month);
+                return makeCalendarDate(+m[3], month, day);
+            }
+            return null;
+        }
+
+        // Canonical internal representation. All delay maths runs on Date objects
+        // built from this, never on raw strings.
+        function toISODateString(date) {
+            if (!(date instanceof Date) || isNaN(date.getTime())) return null;
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════
+           CENTRAL DELAY CALCULATION
+           The single source of truth. Dashboard cards, the delay table, charts,
+           the Word report and the Excel report all consume this one result, so
+           the numbers can never disagree between views.
+           ═══════════════════════════════════════════════════════════════════════ */
+        function calculateApplicationDelay({ startDate, completionDate, status, reportingAsOfDate, standardDays = SERVICE_MAX_DAYS }) {
+            const allowedDays = standardDays;
+            const start = parseDateFlexible(startDate);
+            const completion = parseDateFlexible(completionDate);
+            const asOf = parseDateFlexible(reportingAsOfDate);
+            const isCompleted = isCompletedStatus(status);
+
+            const base = {
+                processingDays: null,
+                allowedDays,
+                delayDays: 0,
+                isDelayed: false,
+                isCompleted,
+                calculationEndDate: null,
+                isValid: false,
+                invalidReason: null
+            };
+
+            if (!start) return { ...base, invalidReason: 'គ្មានថ្ងៃចាប់ផ្ដើម / ទម្រង់កាលបរិច្ឆេទមិនត្រឹមត្រូវ' };
+
+            // A finished application stops its clock at completion. It must never
+            // keep accruing delay up to today.
+            let endDate;
+            if (isCompleted) {
+                if (!completion) return { ...base, invalidReason: 'អនុម័តរួច ប៉ុន្តែគ្មានថ្ងៃបញ្ចប់' };
+                if (completion < start) return { ...base, invalidReason: 'ថ្ងៃបញ្ចប់មុនថ្ងៃចាប់ផ្ដើម' };
+                endDate = completion;
+            } else {
+                if (!asOf) return { ...base, invalidReason: 'គ្មានថ្ងៃកំណត់សម្រាប់របាយការណ៍' };
+                if (asOf < start) return { ...base, invalidReason: 'ថ្ងៃចាប់ផ្ដើមក្រោយថ្ងៃកំណត់របាយការណ៍' };
+                endDate = asOf;
+            }
+
+            const processingDays = daysBetween(start, endDate);
+            if (processingDays === null || processingDays < 0) {
+                return { ...base, invalidReason: 'មិនអាចគណនារយៈពេលដំណើរការ' };
+            }
+            const delayDays = Math.max(0, processingDays - allowedDays);
+            return {
+                processingDays,
+                allowedDays,
+                delayDays,
+                isDelayed: delayDays > 0,
+                isCompleted,
+                calculationEndDate: endDate,
+                startDate: start,
+                isValid: true,
+                invalidReason: null
+            };
+        }
+
+        function resolveConfiguredValue(row, columnNames) {
+            for (const name of columnNames) {
+                if (row[name] !== undefined && String(row[name]).trim() !== '') return row[name];
+            }
+            return '';
+        }
+
+        // Reporting cut-off for still-processing applications. Uses the configured
+        // period end; if that is cleared, falls back to the newest start date in
+        // the imported data — never to the system clock.
+        function resolveReportingAsOfDate(applications) {
+            const configured = parseDateFlexible(DELAY_CONFIG.reportingAsOfDate);
+            if (configured) return configured;
+            let newest = null;
+            applications.forEach(app => {
+                if (app.startDateObj && (!newest || app.startDateObj > newest)) newest = app.startDateObj;
+            });
+            return newest;
+        }
+
+        /* One application = one primary row (ល.រ មុខសញ្ញា = ១).
+           Detail/instrument rows attach to their parent application and never
+           become applications of their own. */
+        function buildApplicationRecords(data) {
+            const applications = [];
+            data.forEach(row => {
+                if (isPrimaryCompanyRow(row)) {
+                    const startRaw = resolveConfiguredValue(row, DELAY_CONFIG.startDateColumns);
+                    const completionRaw = resolveConfiguredValue(row, DELAY_CONFIG.completionDateColumns);
+                    applications.push({
+                        companyNo: cleanText(row['ល.រ ក្រុមហ៊ុន/សហគ្រាស'], ''),
+                        company: cleanText(row['ឈ្មោះក្រុមហ៊ុន/សហគ្រាស'], 'មិនបានបញ្ជាក់'),
+                        province: normalizeProvince(row['រាជធានី/ខេត្ត']),
+                        applicationType: cleanText(row['មុខសញ្ញាជាឧបករណ៍មាត្រាសាស្ត្រ ឬទំនិញវេចខ្ចប់'], 'ឯកសារចុះបញ្ជី'),
+                        rawStatus: cleanText(row['ស្ថានភាព'], ''),
+                        startDateRaw: startRaw,
+                        completionDateRaw: completionRaw,
+                        startDateObj: parseDateFlexible(startRaw),
+                        detailRowCount: 0
+                    });
+                }
+                const current = applications[applications.length - 1];
+                if (current && getItemRowNo(row) !== null) current.detailRowCount++;
+            });
+            return applications;
+        }
+
+        // Every delay number in the app comes from here.
+        function computeDelayAnalysis(data) {
+            const applications = buildApplicationRecords(data);
+            const asOfDate = resolveReportingAsOfDate(applications);
+
+            const records = applications.map((app, index) => {
+                const result = calculateApplicationDelay({
+                    startDate: app.startDateRaw,
+                    completionDate: app.completionDateRaw,
+                    status: app.rawStatus,
+                    reportingAsOfDate: asOfDate,
+                    standardDays: DELAY_CONFIG.standardDays
+                });
+                return {
+                    no: app.companyNo || String(index + 1),
+                    company: app.company,
+                    province: app.province,
+                    applicationType: app.applicationType,
+                    status: normalizeStatus(app.rawStatus),
+                    rawStatus: app.rawStatus,
+                    detailRowCount: app.detailRowCount,
+                    startDate: toISODateString(result.startDate || app.startDateObj) || '-',
+                    endDate: toISODateString(result.calculationEndDate) || DELAY_INVALID_LABEL,
+                    processingDays: result.processingDays,
+                    allowedDays: result.allowedDays,
+                    delayDays: result.delayDays,
+                    isDelayed: result.isDelayed,
+                    isCompleted: result.isCompleted,
+                    isValid: result.isValid,
+                    invalidReason: result.invalidReason,
+                    owner: inferDelayOwner({}, normalizeStatus(app.rawStatus))
+                };
+            });
+
+            const valid = records.filter(r => r.isValid);
+            const invalid = records.filter(r => !r.isValid);
+            const delayed = valid.filter(r => r.isDelayed).sort((a, b) => b.delayDays - a.delayDays || b.processingDays - a.processingDays);
+            const delayValues = valid.map(r => r.delayDays).sort((a, b) => a - b);
+
+            const median = (() => {
+                if (!delayValues.length) return 0;
+                const mid = Math.floor(delayValues.length / 2);
+                return delayValues.length % 2 ? delayValues[mid] : Math.round((delayValues[mid - 1] + delayValues[mid]) / 2);
+            })();
+
+            const buckets = [
+                { label: 'ទាន់ពេល (០ ថ្ងៃ)', min: 0, max: 0 },
+                { label: 'យឺត ១–៧ ថ្ងៃ', min: 1, max: 7 },
+                { label: 'យឺត ៨–១៥ ថ្ងៃ', min: 8, max: 15 },
+                { label: 'យឺត ១៦–៣០ ថ្ងៃ', min: 16, max: 30 },
+                { label: 'យឺត ៣១–៦០ ថ្ងៃ', min: 31, max: 60 },
+                { label: 'យឺតលើសពី ៦០ ថ្ងៃ', min: 61, max: Infinity }
+            ].map(b => ({ label: b.label, count: valid.filter(r => r.delayDays >= b.min && r.delayDays <= b.max).length }));
+
+            return {
+                asOfDate,
+                asOfDateText: toISODateString(asOfDate) || '-',
+                standardDays: DELAY_CONFIG.standardDays,
+                records,
+                delayed,
+                invalid,
+                statistics: {
+                    totalApplications: records.length,
+                    totalDetailRows: data.length,
+                    completedApplications: records.filter(r => r.isCompleted).length,
+                    processingApplications: records.filter(r => !r.isCompleted).length,
+                    withinStandard: valid.filter(r => !r.isDelayed).length,
+                    exceedingStandard: delayed.length,
+                    delayedApplications: delayed.length,
+                    highestDelay: delayed.length ? delayed[0].delayDays : 0,
+                    highestDelayCompany: delayed.length ? delayed[0].company : '-',
+                    averageDelay: delayValues.length ? Math.round(delayValues.reduce((s, v) => s + v, 0) / delayValues.length) : 0,
+                    medianDelay: median,
+                    invalidDateRecords: invalid.length,
+                    measurableApplications: valid.length,
+                    distribution: buckets
+                }
+            };
         }
         function formatDate(date) {
             if (!date) return '-';
@@ -2112,7 +2915,10 @@
                 const rawStatus = cleanText(row['ស្ថានភាព'], 'មិនបានបញ្ជាក់');
                 const status = normalizeStatus(rawStatus);
                 const completed = isCompletedStatus(rawStatus);
-                const regDate = parseDateFlexible(row['ថ្ងៃ/ខែ/ឆ្នាំចុះបញ្ជីមាត្រាសាស្ត្រ'] || row['ថ្ងៃ/ខែ/ឆ្នាំចាប់ផ្ដើមមានសុពលភាព'] || '');
+                // Start of the processing clock. It must never fall back to the
+                // certificate-validity column (2014–2026 historical dates) — that
+                // fallback is what produced multi-thousand-day delays.
+                const regDate = parseDateFlexible(resolveConfiguredValue(row, DELAY_CONFIG.startDateColumns));
                 const startDate = parseDateFlexible(row['ថ្ងៃ/ខែ/ឆ្នាំចាប់ផ្ដើមមានសុពលភាព'] || '');
 
                 const itemRowNo = getItemRowNo(row);
@@ -2136,7 +2942,9 @@
                         startDate,
                         status,
                         rawStatus,
-                        approvalDate: parseDateFlexible(row['ថ្ងៃ/ខែ/ឆ្នាំអនុម័ត'] || row['ថ្ងៃអនុម័ត'] || row['ថ្ងៃចេញវិញ្ញាបនបត្រ'] || row['ថ្ងៃ/ខែ/ឆ្នាំចេញវិញ្ញាបនបត្រ'] || row['ថ្ងៃ/ខែ/ឆ្នាំចាប់ផ្ដើមមានសុពលភាព'] || ''),
+                        // Completion date only — the old chain ended at the
+                        // validity column, giving completed files a 2016 “approval”.
+                        approvalDate: parseDateFlexible(resolveConfiguredValue(row, DELAY_CONFIG.completionDateColumns)),
                         registrationType: getRegistrationType(row, regDate, startDate),
                         totalItems: 0,
                         toolsCount: 0,
@@ -2187,40 +2995,11 @@
                 }
             });
 
-            // Delay analysis is document/company based: one primary row (ល.រ មុខសញ្ញា = ១) = one document.
-            // The first 7 elapsed days are within the service standard; day 8 is 1 day late.
+            // Delay analysis runs through the one central service so the cards,
+            // the table, the Word report and the Excel report cannot disagree.
+            const delayAnalysis = computeDelayAnalysis(data);
             delays.length = 0;
-            const today = new Date();
-            const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            companyRows.forEach((x, index) => {
-                const regDate = x.regDateObj;
-                if (!regDate) return;
-                const completed = isCompletedStatus(x.rawStatus);
-                const approvalDate = x.approvalDateObj;
-                let endDate = todayDate;
-
-                // Completed documents are measured up to the actual approval/issuance date.
-                // If no reliable approval date exists, do not classify the completed document as late.
-                if (completed) {
-                    if (!approvalDate || approvalDate < regDate) return;
-                    endDate = approvalDate;
-                }
-
-                const processDays = daysBetween(regDate, endDate);
-                if (processDays === null || processDays <= SERVICE_MAX_DAYS) return;
-                const delayedDays = processDays - SERVICE_MAX_DAYS;
-                delays.push({
-                    no: x.companyNo || index + 1,
-                    company: x.company,
-                    province: x.province,
-                    category: 'ឯកសារចុះបញ្ជី',
-                    regDate: formatDate(regDate),
-                    processDays,
-                    delayedDays,
-                    owner: inferDelayOwner({/* document-level record */}, x.status),
-                    status: x.status
-                });
-            });
+            delays.push(...delayAnalysis.delayed);
 
             const companyProvinceCounts = {};
             companyRows.forEach(x => {
@@ -2294,7 +3073,7 @@
             renderSummaryTable('packagesSummaryBody', packages);
             renderCompaniesTable(companyRows);
             renderProvinceCompanyCountTable(provinceCompanyRows);
-            renderDelayTable(delays);
+            renderDelayTable(delayAnalysis);
             renderCharts(monthLabels, monthlyData, statuses, provinces, companyProvinceCounts);
 
             // Enable download buttons if data is present
@@ -2325,26 +3104,57 @@
                 toolsSummary: tools,
                 packagesSummary: packages,
                 delayedDocuments: delays,
+                delayAnalysis,
                 sourceRows: data,
                 monthLabels: monthLabels,
                 monthlyData: monthlyData
             };
         }
-        function renderDelayTable(delays) {
+        function renderDelayTable(analysis) {
             const tbody = document.getElementById('delayTableBody'), summary = document.getElementById('delaySummary');
             if (!tbody || !summary) { console.warn('Delay table elements were not found; delay rendering was skipped.'); return; }
             tbody.innerHTML = '';
-            const rows = delays.sort((a,b) => b.delayedDays-a.delayedDays || b.processDays-a.processDays);
-            const total = rows.length, max = total ? rows[0].delayedDays : 0, avg = total ? Math.round(rows.reduce((s,x)=>s+x.delayedDays,0)/total) : 0;
-            summary.innerHTML = `<div class="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center"><p class="text-xs text-gray-600 font-bold">ឯកសារយឺតលើស ៧ថ្ងៃ</p><p class="text-2xl font-bold text-orange-700">${formatNumber(total)}</p></div><div class="bg-red-50 border border-red-200 rounded-lg p-3 text-center"><p class="text-xs text-gray-600 font-bold">យឺតខ្ពស់បំផុត</p><p class="text-2xl font-bold text-red-700">${formatNumber(max)} ថ្ងៃ</p></div><div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center"><p class="text-xs text-gray-600 font-bold">មធ្យមយឺត</p><p class="text-2xl font-bold text-yellow-700">${formatNumber(avg)} ថ្ងៃ</p></div>`;
+
+            const stats = analysis.statistics;
+            const rows = analysis.delayed; // already sorted delayDays DESC
+            const card = (label, value, unit, tone) =>
+                `<div class="bg-${tone}-50 border border-${tone}-200 rounded-lg p-3 text-center"><p class="text-xs text-gray-600 font-bold">${label}</p><p class="text-2xl font-bold text-${tone}-700">${formatNumber(value)}${unit ? ` ${unit}` : ''}</p></div>`;
+
+            summary.innerHTML =
+                card('ឯកសារយឺតលើស ៧ថ្ងៃ', stats.delayedApplications, '', 'orange') +
+                card('យឺតខ្ពស់បំផុត', stats.highestDelay, 'ថ្ងៃ', 'red') +
+                card('មធ្យមយឺត', stats.averageDelay, 'ថ្ងៃ', 'yellow') +
+                `<div class="md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center"><p class="text-gray-600 font-bold">សំណុំឯកសារសរុប</p><p class="text-base font-bold text-slate-700">${formatNumber(stats.totalApplications)}</p></div>
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center"><p class="text-gray-600 font-bold">ក្នុងស្តង់ដារ ៧ថ្ងៃ</p><p class="text-base font-bold text-emerald-700">${formatNumber(stats.withinStandard)}</p></div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center"><p class="text-gray-600 font-bold">មធ្យមកណ្ដាល (Median)</p><p class="text-base font-bold text-blue-700">${formatNumber(stats.medianDelay)} ថ្ងៃ</p></div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 text-center"><p class="text-gray-600 font-bold">${DELAY_INVALID_LABEL}</p><p class="text-base font-bold text-amber-700">${formatNumber(stats.invalidDateRecords)}</p></div>
+                 </div>
+                 <div class="md:col-span-3 bg-white border border-slate-200 rounded-lg p-3">
+                    <p class="text-[11px] font-bold text-gray-600 mb-2">ការចែកចាយរយៈពេលយឺត (គិតលើ ${formatNumber(stats.measurableApplications)} សំណុំដែលគណនាបាន · ថ្ងៃកំណត់ ${analysis.asOfDateText})</p>
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-center text-[10.5px]">
+                        ${stats.distribution.map(b => `<div class="border border-slate-200 rounded p-1.5"><p class="text-gray-600">${b.label}</p><p class="font-bold text-slate-800 text-sm">${formatNumber(b.count)}</p></div>`).join('')}
+                    </div>
+                 </div>`;
+
             if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="9" class="px-4 py-4 text-center text-gray-500">មិនមានឯកសារយឺតលើសស្តង់ដារ ៧ថ្ងៃ</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="px-4 py-4 text-center text-gray-500">មិនមានឯកសារយឺតលើសស្តង់ដារ ៧ថ្ងៃ</td></tr>';
                 return;
             }
-            rows.forEach((x,i) => {
+            rows.forEach((x, i) => {
                 const tr = document.createElement('tr');
                 tr.className = i % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-                tr.innerHTML = `<td class="px-4 py-2 border-b">${x.no}</td><td class="px-4 py-2 border-b font-medium text-gray-900">${x.company}</td><td class="px-4 py-2 border-b">${x.province}</td><td class="px-4 py-2 border-b">${x.category}</td><td class="px-4 py-2 border-b">${x.regDate}</td><td class="px-4 py-2 border-b text-center">${formatNumber(x.processDays)} ថ្ងៃ</td><td class="px-4 py-2 border-b text-center font-bold text-red-700">${formatNumber(x.delayedDays)} ថ្ងៃ</td><td class="px-4 py-2 border-b">${x.owner}</td><td class="px-4 py-2 border-b text-center"><span class="px-2 py-1 rounded text-xs font-semibold bg-orange-100 text-orange-800">${x.status}</span></td>`;
+                tr.innerHTML =
+                    `<td class="px-4 py-2 border-b">${x.no}</td>` +
+                    `<td class="px-4 py-2 border-b font-medium text-gray-900">${x.company}</td>` +
+                    `<td class="px-4 py-2 border-b">${x.province}</td>` +
+                    `<td class="px-4 py-2 border-b">${x.applicationType}</td>` +
+                    `<td class="px-4 py-2 border-b">${x.startDate}</td>` +
+                    `<td class="px-4 py-2 border-b">${x.endDate}</td>` +
+                    `<td class="px-4 py-2 border-b text-center">${formatNumber(x.processingDays)} ថ្ងៃ</td>` +
+                    `<td class="px-4 py-2 border-b text-center text-gray-500">${formatNumber(x.allowedDays)} ថ្ងៃ</td>` +
+                    `<td class="px-4 py-2 border-b text-center font-bold text-red-700">${formatNumber(x.delayDays)} ថ្ងៃ</td>` +
+                    `<td class="px-4 py-2 border-b text-center"><span class="px-2 py-1 rounded text-xs font-semibold bg-orange-100 text-orange-800">${x.status}</span></td>`;
                 tbody.appendChild(tr);
             });
         }
