@@ -595,16 +595,16 @@
 
                                 <!-- Institutional Text Hierarchy -->
                                 <div class="min-w-0">
-                                    <p class="text-[9px] sm:text-[10px] font-semibold text-amber-400/90 uppercase tracking-[0.12em] truncate leading-tight">
-                                        នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម
-                                    </p>
-                                    <h1 class="font-moul text-base sm:text-lg text-white tracking-wide leading-snug mt-0.5 truncate">
+                                    <h1 class="font-moul text-base sm:text-lg text-white tracking-wide leading-snug truncate">
                                         មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ
                                     </h1>
-                                    <div class="flex items-center gap-2 mt-0.5">
-                                        <span class="text-[10px] sm:text-[11px] font-semibold text-blue-200/90 tracking-wide truncate">National Metrology Center of Cambodia</span>
-                                        <span class="hidden sm:inline text-blue-500/40 text-[10px]">—</span>
-                                        <span class="hidden sm:inline text-[9px] text-blue-300/50 font-medium tracking-wider">NMC</span>
+                                    <p class="text-[10px] sm:text-[11px] font-semibold text-amber-400/90 tracking-wide truncate mt-0.5">
+                                        នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម
+                                    </p>
+                                    <div class="flex items-center gap-2 mt-0.5 text-[9.5px] sm:text-[10px]">
+                                        <span class="font-semibold text-blue-200/80 truncate">National Metrology Center of Cambodia</span>
+                                        <span class="text-blue-500/40">•</span>
+                                        <span class="text-blue-300/60 font-medium truncate">Department of Industrial Metrology</span>
                                     </div>
                                 </div>
                             </div>
@@ -1057,7 +1057,9 @@
                             <div>
                                 <h3 class="font-moul text-xs text-rose-800">ឯកសារយឺតលើស ៧ថ្ងៃ</h3>
                                 <p class="text-[10px] text-slate-500 mt-1 font-medium">
-                                    គណនាផ្អែកលើសំណុំឯកសារក្រុមហ៊ុន (ល.រ មុខសញ្ញា = ១)។ រយៈពេលលើស ៧ថ្ងៃ គិតចាប់ពីថ្ងៃចុះបញ្ជី គឺជាការយឺតយ៉ាវ។
+                                    គណនាផ្អែកលើសំណុំឯកសារក្រុមហ៊ុន (ល.រ មុខសញ្ញា = ១) មួយសំណុំ = មួយកំណត់ត្រា។
+                                    ស្តង់ដារសេវា ៧ ថ្ងៃ។ យឺត = MAX(០, ថ្ងៃដំណើរការ − ៧)។
+                                    សំណុំដែលអនុម័តរួច ឈប់រាប់ថ្ងៃនៅថ្ងៃបញ្ចប់ ឯសំណុំកំពុងដំណើរការ រាប់ដល់ថ្ងៃកំណត់របាយការណ៍។
                                 </p>
                             </div>
                         </div>
@@ -1394,10 +1396,17 @@
             }
             
             const delayedCount = data.delayedDocuments.length;
+            const delayStats = data.delayAnalysis ? data.delayAnalysis.statistics : null;
             if (delayedCount > 0) {
                 text += ` ប្រព័ន្ធក៏បានរកឃើញសំណុំឯកសារយឺតពេលលើសពីស្ដង់ដារសេវា (៧ ថ្ងៃ) ចំនួន ${toKhmerDigits(delayedCount)} ករណី ដែលត្រូវតាមដាន និងពន្លឿនការអនុម័ត។`;
+                if (delayStats) {
+                    text += ` ការយឺតខ្ពស់បំផុតគឺ ${toKhmerDigits(delayStats.highestDelay)} ថ្ងៃ និងមធ្យមភាគ ${toKhmerDigits(delayStats.averageDelay)} ថ្ងៃ (គិតត្រឹមថ្ងៃ ${delayStats && data.delayAnalysis.asOfDateText})។`;
+                }
             } else {
                 text += ` មិនមានសំណុំឯកសារណាដែលយឺតពេលលើសពីស្ដង់ដារសេវា ៧ ថ្ងៃ ឡើយ។`;
+            }
+            if (delayStats && delayStats.invalidDateRecords > 0) {
+                text += ` មានសំណុំចំនួន ${toKhmerDigits(delayStats.invalidDateRecords)} ដែលមិនអាចគណនារយៈពេលបានដោយសារកង្វះកាលបរិច្ឆេទ ហើយមិនត្រូវបានបញ្ចូលក្នុងស្ថិតិយឺតឡើយ។`;
             }
             
             return text;
@@ -1998,34 +2007,13 @@
                     'ប្រភេទសំណើថ្មី/បន្ត', 'ស្ថានភាព', 'ថ្ងៃអនុម័ត', 'ថ្ងៃដំណើរការ', 'យឺតចំនួនថ្ងៃ'
                 ]);
 
-                const todayDate = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
-
+                // Delay figures come from the central analysis — never recomputed here.
                 data.companies.forEach((c, idx) => {
-                    let processDaysText = '-';
-                    let delayedDaysText = '-';
-                    if (c.regDateObj) {
-                        const completed = isCompletedStatus(c.rawStatus);
-                        let endDate = todayDate;
-                        let canCalc = true;
-                        if (completed) {
-                            if (!c.approvalDateObj || c.approvalDateObj < c.regDateObj) {
-                                canCalc = false;
-                            } else {
-                                endDate = c.approvalDateObj;
-                            }
-                        }
-                        if (canCalc) {
-                            const days = daysBetween(c.regDateObj, endDate);
-                            processDaysText = days !== null ? `${days} ថ្ងៃ` : '-';
-                            if (days !== null && days > SERVICE_MAX_DAYS) {
-                                delayedDaysText = `${days - SERVICE_MAX_DAYS} ថ្ងៃ`;
-                            } else {
-                                delayedDaysText = '០ ថ្ងៃ';
-                            }
-                        } else if (completed) {
-                            delayedDaysText = 'មិនអាចគណនា—គ្មានថ្ងៃអនុម័ត';
-                        }
-                    }
+                    const rec = getDelayRecordFor(data, c, idx);
+                    const processDaysText = rec && rec.isValid ? `${rec.processingDays} ថ្ងៃ` : '-';
+                    const delayedDaysText = rec
+                        ? (rec.isValid ? `${rec.delayDays} ថ្ងៃ` : `${DELAY_INVALID_LABEL} — ${rec.invalidReason}`)
+                        : '-';
 
                     wsComp.addRow([
                         idx + 1,
@@ -2038,7 +2026,7 @@
                         c.packagesCount,
                         c.registrationType === 'new' ? 'ចុះបញ្ជីថ្មី' : 'ចុះបញ្ជីបន្ត',
                         c.status,
-                        c.approvalDateObj ? formatDate(c.approvalDateObj) : '-',
+                        rec && rec.isValid ? rec.endDate : '-',
                         processDaysText,
                         delayedDaysText
                     ]);
@@ -2101,29 +2089,37 @@
                 // Sheet 6: ឯកសារយឺត
                 const wsDelay = workbook.addWorksheet('ឯកសារយឺត');
                 wsDelay.views = [{ showGridLines: true }];
-                wsDelay.addRow(['ល.រ', 'ឈ្មោះក្រុមហ៊ុន/សហគ្រាស', 'រាជធានី/ខេត្ត', 'ថ្ងៃចុះបញ្ជី', 'ថ្ងៃអនុម័ត ឬថ្ងៃគណនា', 'ថ្ងៃដំណើរការ', 'យឺតចំនួនថ្ងៃ', 'ស្ថានភាព', 'យឺតនៅអ្នកណា']);
+                wsDelay.addRow(['ល.រ', 'ឈ្មោះក្រុមហ៊ុន/សហគ្រាស', 'រាជធានី/ខេត្ត', 'ប្រភេទសំណើ', 'ថ្ងៃចាប់ផ្ដើម', 'ថ្ងៃបញ្ចប់/ថ្ងៃកំណត់', 'ថ្ងៃដំណើរការ', 'ស្តង់ដារ', 'យឺតចំនួនថ្ងៃ', 'ស្ថានភាព']);
 
+                // Same records the dashboard table renders — no recalculation.
                 data.delayedDocuments.forEach((d, idx) => {
-                    const compRec = data.companies.find(c => c.company === d.company);
-                    const completed = compRec ? isCompletedStatus(compRec.rawStatus) : false;
-                    let targetDateText = '-';
-                    if (compRec) {
-                        targetDateText = completed ? (compRec.approvalDateObj ? formatDate(compRec.approvalDateObj) : 'គ្មានថ្ងៃអនុម័ត') : formatDate(todayDate);
-                    }
                     wsDelay.addRow([
                         idx + 1,
                         d.company,
                         d.province,
-                        d.regDate,
-                        targetDateText,
-                        `${d.processDays} ថ្ងៃ`,
-                        `${d.delayedDays} ថ្ងៃ`,
-                        d.status,
-                        d.owner
+                        d.applicationType,
+                        d.startDate,
+                        d.endDate,
+                        `${d.processingDays} ថ្ងៃ`,
+                        `${d.allowedDays} ថ្ងៃ`,
+                        `${d.delayDays} ថ្ងៃ`,
+                        d.status
                     ]);
                 });
-                formatTable(wsDelay, 1, 9);
-                autofitWidths(wsDelay, 9);
+                formatTable(wsDelay, 1, 10);
+                autofitWidths(wsDelay, 10);
+
+                // Sheet 6b: records excluded from delay statistics, with the reason.
+                if (data.delayAnalysis && data.delayAnalysis.invalid.length) {
+                    const wsInvalid = workbook.addWorksheet(DELAY_INVALID_LABEL);
+                    wsInvalid.views = [{ showGridLines: true }];
+                    wsInvalid.addRow(['ល.រ', 'ឈ្មោះក្រុមហ៊ុន/សហគ្រាស', 'រាជធានី/ខេត្ត', 'ថ្ងៃចាប់ផ្ដើម', 'ស្ថានភាព', 'មូលហេតុ']);
+                    data.delayAnalysis.invalid.forEach((r, idx) => {
+                        wsInvalid.addRow([idx + 1, r.company, r.province, r.startDate, r.status, r.invalidReason]);
+                    });
+                    formatTable(wsInvalid, 1, 6);
+                    autofitWidths(wsInvalid, 6);
+                }
 
                 // Sheet 7: ទិន្នន័យដើម
                 const wsRaw = workbook.addWorksheet('ទិន្នន័យដើម');
@@ -2160,8 +2156,22 @@
                 wsNotes.addRow(['មុខសញ្ញាសរុប', data.totals.total]);
                 wsNotes.addRow(['ឧបករណ៍មាត្រាសាស្ត្រ', data.totals.toolsCount]);
                 wsNotes.addRow(['ទំនិញវេចខ្ចប់', data.totals.packageCount]);
-                wsNotes.addRow(['គណនាយឺត', 'គណនាតាមសំណុំឯកសារក្រុមហ៊ុន (ល.រ មុខសញ្ញា = ១)។ រយៈពេលលើស ៧ថ្ងៃ គិតចាប់ពីថ្ងៃចុះបញ្ជី។']);
-                wsNotes.addRow(['កាលបរិច្ឆេទបង្កើតរបាយការណ៍', formatDate(todayDate)]);
+                wsNotes.addRow(['គណនាយឺត', 'គណនាតាមសំណុំឯកសារក្រុមហ៊ុន (ល.រ មុខសញ្ញា = ១)។ យឺត = MAX(០, ថ្ងៃដំណើរការ − ៧)។']);
+                wsNotes.addRow(['ថ្ងៃចាប់ផ្ដើម', 'ថ្ងៃ/ខែ/ឆ្នាំចុះបញ្ជីមាត្រាសាស្ត្រ (ថ្ងៃទទួលសំណុំឯកសារចូលដំណើរការ)។']);
+                wsNotes.addRow(['ថ្ងៃបញ្ចប់', 'សំណុំអនុម័តរួច = ថ្ងៃបញ្ចប់ពិតប្រាកដ។ សំណុំកំពុងដំណើរការ = ថ្ងៃកំណត់របាយការណ៍។']);
+                if (data.delayAnalysis) {
+                    const s = data.delayAnalysis.statistics;
+                    wsNotes.addRow(['ថ្ងៃកំណត់របាយការណ៍ (As-of)', data.delayAnalysis.asOfDateText]);
+                    wsNotes.addRow(['សំណុំឯកសារសរុប', s.totalApplications]);
+                    wsNotes.addRow(['អនុម័តរួច', s.completedApplications]);
+                    wsNotes.addRow(['កំពុងដំណើរការ', s.processingApplications]);
+                    wsNotes.addRow(['ក្នុងស្តង់ដារ ៧ ថ្ងៃ', s.withinStandard]);
+                    wsNotes.addRow(['លើសស្តង់ដារ ៧ ថ្ងៃ', s.exceedingStandard]);
+                    wsNotes.addRow(['យឺតខ្ពស់បំផុត', `${s.highestDelay} ថ្ងៃ (${s.highestDelayCompany})`]);
+                    wsNotes.addRow(['មធ្យមយឺត', `${s.averageDelay} ថ្ងៃ`]);
+                    wsNotes.addRow(['មធ្យមកណ្ដាល (Median)', `${s.medianDelay} ថ្ងៃ`]);
+                    wsNotes.addRow([DELAY_INVALID_LABEL, s.invalidDateRecords]);
+                }
 
                 formatTable(wsNotes, 1, 2);
                 autofitWidths(wsNotes, 2);
@@ -2610,6 +2620,91 @@
             };
         }
 
+        /* ═══════════════════════════════════════════════════════════════════════
+           DELAY CALCULATION — SELF-TESTS
+           Run from the browser console with runDelayTests(). Returns
+           {passed, failed, results} and logs a table of every case.
+           ═══════════════════════════════════════════════════════════════════════ */
+        function runDelayTests() {
+            const results = [];
+            const check = (name, actual, expected) => {
+                const pass = JSON.stringify(actual) === JSON.stringify(expected);
+                results.push({ name, expected, actual, pass });
+                return pass;
+            };
+            const delay = (opts) => calculateApplicationDelay({ standardDays: 7, ...opts });
+
+            // 1–4: completed applications stop the clock at completion.
+            check('T1 start 01-01-2026, completed 05-01-2026 → delay 0',
+                delay({ startDate: '01/01/2026', completionDate: '05/01/2026', status: 'COMPLETED' }).delayDays, 0);
+            check('T2 start 01-01-2026, completed 08-01-2026 (7 days) → delay 0',
+                delay({ startDate: '01/01/2026', completionDate: '08/01/2026', status: 'COMPLETED' }).delayDays, 0);
+            check('T3 start 01-01-2026, completed 09-01-2026 (8 days) → delay 1',
+                delay({ startDate: '01/01/2026', completionDate: '09/01/2026', status: 'COMPLETED' }).delayDays, 1);
+            check('T4 start 01-01-2026, completed 15-01-2026 (14 days) → delay 7',
+                delay({ startDate: '01/01/2026', completionDate: '15/01/2026', status: 'COMPLETED' }).delayDays, 7);
+
+            // 5: still processing measures to the reporting as-of date.
+            const t5 = delay({ startDate: '01/01/2026', status: 'REVIEWING', reportingAsOfDate: '20/01/2026' });
+            check('T5 pending, as-of 20-01-2026 → processing 19', t5.processingDays, 19);
+            check('T5 pending, as-of 20-01-2026 → delay 12', t5.delayDays, 12);
+
+            // 6: a completed record must not keep accruing delay after completion.
+            const t6a = delay({ startDate: '01/01/2026', completionDate: '15/01/2026', status: 'COMPLETED', reportingAsOfDate: '2026-08-07' });
+            const t6b = delay({ startDate: '01/01/2026', completionDate: '15/01/2026', status: 'COMPLETED', reportingAsOfDate: '2030-01-01' });
+            check('T6 completed delay is independent of the as-of date', [t6a.delayDays, t6b.delayDays], [7, 7]);
+
+            // 7: 20 detail rows for one application count as one application.
+            const sampleRows = [{ 'ល.រ មុខសញ្ញា': 1, 'ល.រ ក្រុមហ៊ុន/សហគ្រាស': '01', 'ឈ្មោះក្រុមហ៊ុន/សហគ្រាស': 'ក', 'ស្ថានភាព': 'REVIEWING', 'ថ្ងៃ/ខែ/ឆ្នាំចុះបញ្ជីមាត្រាសាស្ត្រ': '2026-07-01' }];
+            for (let i = 2; i <= 20; i++) sampleRows.push({ 'ល.រ មុខសញ្ញា': i, 'ល.រ ក្រុមហ៊ុន/សហគ្រាស': '01', 'ឈ្មោះក្រុមហ៊ុន/សហគ្រាស': 'ក', 'ស្ថានភាព': 'REVIEWING', 'ថ្ងៃ/ខែ/ឆ្នាំចុះបញ្ជីមាត្រាសាស្ត្រ': '2026-07-01' });
+            const grouped = computeDelayAnalysis(sampleRows);
+            check('T7 20 detail rows → 1 application', grouped.statistics.totalApplications, 1);
+            check('T7 20 detail rows → 1 delay record', grouped.records.length, 1);
+
+            // 8–9: invalid dates produce no delay.
+            check('T8 invalid start date → not calculated',
+                delay({ startDate: 'មិនបានបញ្ជាក់', status: 'REVIEWING', reportingAsOfDate: '2026-08-07' }).isValid, false);
+            check('T8 invalid start date → delay stays 0',
+                delay({ startDate: 'មិនបានបញ្ជាក់', status: 'REVIEWING', reportingAsOfDate: '2026-08-07' }).delayDays, 0);
+            const t9 = delay({ startDate: '15/01/2026', completionDate: '01/01/2026', status: 'COMPLETED' });
+            check('T9 completion before start → flagged invalid', [t9.isValid, t9.delayDays], [false, 0]);
+
+            // 10: Cambodian DD/MM/YYYY must not be read as MM/DD/YYYY.
+            check('T10 08/01/2025 parses as 08 January 2025', toISODateString(parseDateFlexible('08/01/2025')), '2025-01-08');
+            check('T10 07-08-2026 parses as 07 August 2026', toISODateString(parseDateFlexible('07-08-2026')), '2026-08-07');
+            check('T10 ISO 2025-01-08 is unchanged', toISODateString(parseDateFlexible('2025-01-08')), '2025-01-08');
+
+            // Regression guards for the defects this fix addresses.
+            check('R1 Excel serial 46204.15867 → 2026-07-01', toISODateString(parseDateFlexible('46204.15867')), '2026-07-01');
+            check('R2 bare year "2018" is not a date', parseDateFlexible('2018'), null);
+            check('R3 stray number "42" is not a date', parseDateFlexible('42'), null);
+            check('R4 impossible date 31/02/2026 rejected', parseDateFlexible('31/02/2026'), null);
+            check('R5 status is trimmed and case-insensitive',
+                [' completed '.trim(), delay({ startDate: '01/01/2026', completionDate: '09/01/2026', status: ' completed ' }).delayDays], ['completed', 1]);
+            check('R6 delay never exceeds processing time',
+                delay({ startDate: '01/01/2026', completionDate: '03/01/2026', status: 'COMPLETED' }).delayDays, 0);
+
+            const passed = results.filter(r => r.pass).length;
+            const failed = results.length - passed;
+            if (typeof console !== 'undefined' && console.table) console.table(results.map(r => ({ test: r.name, pass: r.pass, expected: JSON.stringify(r.expected), actual: JSON.stringify(r.actual) })));
+            console.log(`[delay tests] ${passed} passed, ${failed} failed`);
+            return { passed, failed, results };
+        }
+        if (typeof window !== 'undefined') window.runDelayTests = runDelayTests;
+
+        // Look up an application's delay result from the central analysis.
+        // Applications and company rows are both built from primary rows in file
+        // order, so the index matches; companyNo is used as the primary key.
+        function getDelayRecordFor(data, companyRow, index) {
+            const records = data.delayAnalysis && data.delayAnalysis.records;
+            if (!records || !records.length) return null;
+            if (companyRow && companyRow.companyNo) {
+                const byNo = records.find(r => String(r.no) === String(companyRow.companyNo));
+                if (byNo) return byNo;
+            }
+            return records[index] || null;
+        }
+
         function resolveConfiguredValue(row, columnNames) {
             for (const name of columnNames) {
                 if (row[name] !== undefined && String(row[name]).trim() !== '') return row[name];
@@ -2807,9 +2902,14 @@
             const num = Number(normalized);
             return Number.isFinite(num) ? num : normalized;
         }
+        // One application = one primary row. Accepts the Latin and Khmer digit
+        // forms of ល.រ មុខសញ្ញា = 1, plus zero-padded variants ("01").
         function isPrimaryCompanyRow(row) {
             const rowNo = getItemRowNo(row);
-            return rowNo === 1 || rowNo === '1';
+            if (rowNo === 1) return true;
+            const text = String(rowNo === null ? '' : rowNo).trim();
+            if (text === '១') return true;
+            return /^0*1$/.test(text);
         }
         function renderCompaniesTable(rows) {
             const tbody = document.getElementById('companiesSummaryBody');
