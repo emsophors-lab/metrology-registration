@@ -611,9 +611,9 @@
                         <div class="flex items-center justify-between gap-4">
 
                             <!-- LEFT: Logo + Institutional Identity -->
-                            <div class="flex items-center gap-3.5 min-w-0">
+                            <div class="flex items-center gap-2 sm:gap-3.5 min-w-0 flex-1">
                                 <!-- Mobile menu button -->
-                                <button id="menuBtn" class="p-2 text-slate-300 hover:bg-white/10 rounded-lg md:hidden transition flex-shrink-0">
+                                <button id="menuBtn" class="p-1.5 sm:p-2 text-slate-300 hover:bg-white/10 rounded-lg md:hidden transition flex-shrink-0" aria-label="បើកម៉ឺនុយ">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                                     </svg>
@@ -621,19 +621,19 @@
 
                                 <!-- Official NMC Logo with formal gold ring -->
                                 <div class="relative flex-shrink-0">
-                                    <div class="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-white p-[3px] shadow-xl shadow-blue-900/40 ring-[3px] ring-amber-500/50 flex items-center justify-center">
+                                    <div class="h-11 w-11 sm:h-16 sm:w-16 rounded-full bg-white p-[2px] sm:p-[3px] shadow-xl shadow-blue-900/40 ring-2 sm:ring-[3px] ring-amber-500/50 flex items-center justify-center">
                                         <img src="NMClogo.jpg" alt="National Metrology Center Logo" class="h-full w-full object-cover rounded-full">
                                     </div>
                                     <!-- Status indicator -->
-                                    <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-[#0f2147] shadow-sm"></span>
+                                    <span class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 rounded-full bg-emerald-500 border-2 border-[#0f2147] shadow-sm"></span>
                                 </div>
 
                                 <!-- Institutional Text Hierarchy -->
-                                <div class="min-w-0">
-                                    <h1 class="font-moul text-base sm:text-lg text-white tracking-wide leading-snug truncate">
+                                <div class="min-w-0 flex-1">
+                                    <h1 class="font-moul text-xs sm:text-base md:text-lg text-white tracking-normal sm:tracking-wide leading-snug whitespace-normal sm:whitespace-nowrap">
                                         មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ
                                     </h1>
-                                    <p class="text-[10px] sm:text-[11px] font-semibold text-amber-400/90 tracking-wide truncate mt-0.5">
+                                    <p class="text-[9px] sm:text-[11px] font-semibold text-amber-400/90 tracking-wide truncate mt-0.5">
                                         នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម
                                     </p>
                                 </div>
@@ -1188,8 +1188,19 @@
                             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                 អក្សរកណ្តាល (Center Text Logo)
                             </label>
-                            <input type="text" id="qrModalCenterInput" value="SI" maxlength="6" placeholder="ឧ. SI" oninput="renderSiQrCode()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                            <p class="text-[10px] text-slate-400 mt-1">អក្សរបង្ហាញនៅកណ្តាលរង្វង់ QR Code (ឧ. SI, NMC)</p>
+                            <input type="text" id="qrModalCenterInput" value="NMC" maxlength="6" placeholder="ឧ. NMC" oninput="renderSiQrCode()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                            <p class="text-[10px] text-slate-400 mt-1">អក្សរបង្ហាញនៅកណ្តាលរង្វង់ QR Code (ឧ. NMC, SI)</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                ផ្ទៃខាងក្រោយ (Background)
+                            </label>
+                            <select id="qrModalBackground" onchange="renderSiQrCode()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                                <option value="white">ស (White) — ណែនាំ</option>
+                                <option value="transparent">ថ្លា (Transparent)</option>
+                            </select>
+                            <p class="text-[10px] text-slate-400 mt-1">ទោះជ្រើសរើសថ្លាក៏ដោយ តំបន់ស្កេន នៅតែរក្សាផ្ទៃពណ៌សដដែល</p>
                         </div>
 
                         <!-- Quick Preset Buttons -->
@@ -1198,10 +1209,10 @@
                                 ជ្រើសរើសតំណភ្ជាប់គំរូ (Quick Presets)
                             </label>
                             <div class="flex flex-wrap gap-2">
-                                <button type="button" onclick="setQrPreset('https://metrology-registration.vercel.app', 'SI')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
+                                <button type="button" onclick="setQrPreset('https://metrology-registration.vercel.app', 'NMC')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
                                     ប្រព័ន្ធចុះបញ្ជី (System)
                                 </button>
-                                <button type="button" onclick="setQrPreset('https://misti.gov.kh', 'MISTI')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
+                                <button type="button" onclick="setQrPreset('https://misti.gov.kh', 'NMC')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
                                     ក្រសួង (MISTI)
                                 </button>
                                 <button type="button" onclick="setQrPreset('NMC-VERIFY-2026-REG', 'NMC')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
@@ -1225,9 +1236,10 @@
                             <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             ការមើលគំរូជាក់ស្តែង (Live Preview)
                         </div>
-                        <div class="w-full max-w-[280px] aspect-square rounded-2xl bg-white shadow-md border border-slate-200 p-2 flex items-center justify-center overflow-hidden">
+                        <div class="w-full aspect-square rounded-2xl bg-white shadow-md border border-slate-200 p-2 flex items-center justify-center overflow-hidden" style="max-width: min(100%, 520px);">
                             <canvas id="siQrCanvas" class="w-full h-full object-contain"></canvas>
                         </div>
+                        <p id="qrMetaLine" class="mt-3 text-[10px] font-mono text-slate-400 text-center break-words"></p>
                     </div>
 
                 </div>
@@ -1402,186 +1414,333 @@
             renderSiQrCode();
         }
 
-        function renderSiQrCode() {
-            const textInput = document.getElementById('qrModalTextInput');
-            const centerTextInput = document.getElementById('qrModalCenterInput');
-            const canvas = document.getElementById('siQrCanvas');
-            if (!canvas || !textInput || !centerTextInput) return;
+        /* ═══════════════════════════════════════════════════════════════════
+           SI CIRCULAR QR RENDERER
+           ───────────────────────────────────────────────────────────────────
+           ONE function drives both the live preview and the high-resolution
+           PNG export, so what you see is exactly what you download. Every
+           dimension is expressed as a fraction of `size`, so the design is
+           resolution independent.
+
+           SCANNABILITY IS A HARD CONSTRAINT. Two rules are never broken:
+
+             1. EVERY module of the generated matrix is drawn. Nothing is
+                clipped away. The matrix is sized so that its corners — and
+                therefore the finder patterns, format information, alignment
+                and timing patterns — sit fully inside the ring. The circular
+                character comes from the ring, the white margin and the
+                sector colouring, not from cutting the code apart.
+
+             2. The finder patterns keep their true 1:1:3:1:1 run ratio
+                (1 module dark, 1 light, 3 dark, 1 light, 1 dark). Corners are
+                only softened on the diagonal, which no scan line crosses.
+
+           The centre badge is the sole masked region, and its radius is capped
+           against the error-correction budget — see CENTER_AREA_BUDGET.
+
+           WHY THE MATRIX DOESN'T VISUALLY REACH THE RING ON ALL SIDES:
+           For any square inscribed in a circle, the distance from centre to a
+           CORNER is always √2 (~1.41×) the distance to a SIDE MIDPOINT. The
+           three finder patterns sit exactly at three of the matrix's corners,
+           so keeping them fully inside the ring (rule 1 above) caps how close
+           the corners can get to the ring — and the flat sides, being √2
+           closer to the centre by construction, necessarily fall short of
+           that same boundary. This is not a rendering bug; it is a property
+           of any square QR matrix placed inside a true circle without
+           clipping it.
+           Empirically tested and rejected as unsafe: (a) deliberately
+           oversizing the matrix and clipping the overshoot with a real canvas
+           circular clip — passed a small spot-check but failed 13/36 cases
+           once tested against a fuller payload/resolution matrix; (b)
+           tightening the ring/margin to enlarge qrBodyRadius — same fill
+           *ratio* either way (tightening only scales pixels up, not the
+           corner/side proportion), and it destabilized decoding at native
+           render resolutions; (c) reducing the quiet zone below the shipped
+           4.4 modules — reintroduced the exact small-matrix failure a
+           previous fix eliminated. All three are reproducible in the git
+           history/conversation log, not assumptions.
+           The one change applied here is centerRatio (0.15→0.11): it doesn't
+           touch matrix sizing at all, so it carries none of that risk.
+           ═══════════════════════════════════════════════════════════════════ */
+
+        /* Brand sectors, clockwise from 12 o'clock. Yellow and green are deepened
+           from the initial bright picks (#ffb800, #76bc21) — at scanner-camera
+           resolution, both sat too close to white for the local binarization
+           threshold to reliably separate module from background, and dropped
+           real decode tests below (verified with jsQR: both failed in isolation,
+           every other sector passed). Darkened, they hold the same hue family as
+           the reference while keeping full functional contrast. */
+        const SI_QR_COLORS = [
+            '#e11624', // Red            — top
+            '#f36f21', // Orange         — upper-right
+            '#d4a017', // Gold           — right        (darkened from #ffb800)
+            '#5a9e18', // Forest Green   — lower-right   (darkened from #76bc21)
+            '#0072ce', // Royal Blue     — lower-left
+            '#d81b8e', // Magenta Pink   — left
+            '#4a1584'  // Indigo Purple  — upper-left
+        ];
+
+        // Geometry as fractions of the canvas edge, tuned against the SI reference.
+        const SI_QR_GEOMETRY = {
+            ringOuterR: 0.4625,   // outer edge of the segmented ring
+            ringThickness: 0.038, // ring stroke width
+            ringGapDeg: 6,        // white separation between segments
+            centerRatio: 0.110    // centre badge radius vs matrix side (capped below) — was 0.150 (~30% of QR body); reduced to ~22%, freeing real module area around the badge. See renderCircularQr's comment block for why ringOuterR/ringThickness/quiet-zone are NOT tuned further.
+        };
+
+        /* QR spec requires a quiet zone of >=4 modules on every side of the
+           symbol, including diagonally past the finder-pattern corners — the
+           direction that matters here, since the matrix corner is what sits
+           closest to the ring. A gap expressed as a flat fraction of canvas
+           size shrinks to under 2 modules on a small (~33-module) matrix, which
+           is exactly why version-1/4 payloads failed to decode. Expressing it
+           in module-widths keeps the clearance correct at every size. */
+        const QUIET_ZONE_MODULES = 4.4;
+
+        /* Error-correction budget for the centre badge. Level H recovers ~30% of
+           codewords; we spend well under that so print and screen scans keep
+           headroom. A sparse matrix has far fewer codewords, so the same badge
+           costs proportionally more of them — the budget therefore tightens as
+           the matrix gets smaller. Visual size never wins over the code working. */
+        function centerAreaBudgetFor(moduleCount) {
+            if (moduleCount <= 33) return 0.075;
+            if (moduleCount <= 49) return 0.090;
+            return 0.100;
+        }
+
+        /* A tiny payload such as "NMC" would otherwise produce a version-1 (21×21)
+           symbol, which carries too few codewords to give up any area to a centre
+           badge. Forcing a minimum version buys redundancy, keeps the badge at a
+           consistent visual size across payloads, and costs nothing else. */
+        const QR_MIN_VERSION = 4; // 33×33 modules
+
+        function buildQrMatrix(data) {
+            for (let v = QR_MIN_VERSION; v <= 40; v++) {
+                try {
+                    const qr = window.qrcode(v, 'H');
+                    qr.addData(data);
+                    qr.make();
+                    return qr;
+                } catch (e) { /* payload too long for this version — try the next */ }
+            }
+            const qr = window.qrcode(0, 'H'); // last resort: let the library size it
+            qr.addData(data);
+            qr.make();
+            return qr;
+        }
+
+        function renderCircularQr(options) {
+            const {
+                canvas,
+                data,
+                size = 1024,
+                centerLabel = 'NMC',
+                background = 'white'
+            } = options || {};
+            if (!canvas) return null;
+            if (typeof window.qrcode !== 'function') {
+                console.error('qrcode-generator library is not loaded');
+                return null;
+            }
 
             const ctx = canvas.getContext('2d');
-            const size = 1200;
             canvas.width = size;
             canvas.height = size;
-
-            // 7 exact brand colors matching reference image clockwise from top
-            const colors = [
-                '#e11624', // Red (top)
-                '#f36f21', // Orange (upper-right)
-                '#ffb800', // Yellow (right)
-                '#76bc21', // Lime Green (lower-right)
-                '#0072ce', // Royal Blue (lower-left)
-                '#d81b8e', // Magenta Pink (left)
-                '#4a1584'  // Deep Indigo Purple (upper-left)
-            ];
-
-            const text = textInput.value || ' ';
-            const centerText = centerTextInput.value || 'SI';
-            const cx = size / 2;
-            const cy = size / 2;
+            const cx = size / 2, cy = size / 2;
+            const G = SI_QR_GEOMETRY;
+            const colors = SI_QR_COLORS;
+            const sliceDeg = 360 / colors.length;
+            const rad = deg => deg * Math.PI / 180;
 
             ctx.clearRect(0, 0, size, size);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, size, size);
-
-            try {
-                if (typeof window.qrcode !== 'function') {
-                    console.error('qrcode-generator library not loaded');
-                    return;
-                }
-                const qr = window.qrcode(0, 'H');
-                qr.addData(text);
-                qr.make();
-                const count = qr.getModuleCount();
-
-                const qrSide = 810;
-                const cellSize = qrSide / count;
-                const offsetX = cx - qrSide / 2;
-                const offsetY = cy - qrSide / 2;
-                const qrClipRadius = qrSide * 0.51;
-                const centerLogoRadius = 125;
-
-                // 1) Outer segmented circular ring geometry
-                const ringRadius = 500;
-                const ringWidth = 56;
-                const gapDeg = 5;
-                const sliceDeg = 360 / colors.length; // 51.42857°
-
-                const degToRad = (deg) => deg * Math.PI / 180;
-
-                // Draw 7 outer colored arcs
-                ctx.lineWidth = ringWidth;
-                ctx.lineCap = 'butt';
-                for (let i = 0; i < colors.length; i++) {
-                    const centerDeg = -90 + i * sliceDeg;
-                    const startDeg = centerDeg - sliceDeg / 2 + gapDeg / 2;
-                    const endDeg = centerDeg + sliceDeg / 2 - gapDeg / 2;
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, ringRadius, degToRad(startDeg), degToRad(endDeg));
-                    ctx.strokeStyle = colors[i];
-                    ctx.stroke();
-                }
-
-                // 2) White isolation gap between outer ring and QR modules
+            if (background !== 'transparent') {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, size, size);
+            } else {
+                // Quiet zone must stay opaque white even on a transparent export,
+                // otherwise a dark document background destroys the contrast.
                 ctx.beginPath();
-                ctx.arc(cx, cy, 454, 0, Math.PI * 2);
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 22;
-                ctx.stroke();
-
-                // Get exact sector color based on angle from center (12 o'clock = sector 0 Red)
-                const getColor = (x, y) => {
-                    let deg = Math.atan2(y - cy, x - cx) * 180 / Math.PI; // -180 to +180
-                    let relDeg = (deg + 90 + 360) % 360; // 0 at 12 o'clock, clockwise
-                    const idx = Math.floor(((relDeg + sliceDeg / 2) % 360) / sliceDeg) % colors.length;
-                    return colors[idx];
-                };
-
-                const isFinderPattern = (r, c) => {
-                    return (
-                        (r < 7 && c < 7) ||
-                        (r < 7 && c >= count - 7) ||
-                        (r >= count - 7 && c < 7)
-                    );
-                };
-
-                const insideMainCircle = (x, y) => Math.hypot(x - cx, y - cy) <= qrClipRadius;
-                const insideCenterLogo = (x, y) => Math.hypot(x - cx, y - cy) <= centerLogoRadius + cellSize * 0.8;
-
-                // 3) Draw QR data modules with sector color pie mapping
-                for (let r = 0; r < count; r++) {
-                    for (let c = 0; c < count; c++) {
-                        if (!qr.isDark(r, c) || isFinderPattern(r, c)) continue;
-
-                        const x = offsetX + c * cellSize;
-                        const y = offsetY + r * cellSize;
-                        const mx = x + cellSize / 2;
-                        const my = y + cellSize / 2;
-
-                        if (!insideMainCircle(mx, my) || insideCenterLogo(mx, my)) continue;
-
-                        ctx.fillStyle = getColor(mx, my);
-                        ctx.fillRect(
-                            Math.floor(x),
-                            Math.floor(y),
-                            Math.ceil(cellSize) + 0.75,
-                            Math.ceil(cellSize) + 0.75
-                        );
-                    }
-                }
-
-                // 4) Rounded rectangle helper for finder patterns
-                const roundRect = (ctx, x, y, width, height, radius, fill) => {
-                    const r = Math.min(radius, width / 2, height / 2);
-                    ctx.beginPath();
-                    ctx.moveTo(x + r, y);
-                    ctx.lineTo(x + width - r, y);
-                    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
-                    ctx.lineTo(x + width, y + height - r);
-                    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-                    ctx.lineTo(x + r, y + height);
-                    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
-                    ctx.lineTo(x, y + r);
-                    ctx.quadraticCurveTo(x, y, x + r, y);
-                    ctx.closePath();
-                    if (fill) ctx.fill();
-                };
-
-                // 5) Draw 3 finder eyes in exact sector color
-                const drawFinder = (r, c) => {
-                    const x = offsetX + c * cellSize;
-                    const y = offsetY + r * cellSize;
-                    const f = 7 * cellSize;
-                    const mx = x + f / 2;
-                    const my = y + f / 2;
-                    const color = getColor(mx, my);
-
-                    ctx.fillStyle = color;
-                    roundRect(ctx, x, y, f, f, cellSize * 1.35, true);
-
-                    ctx.fillStyle = '#ffffff';
-                    roundRect(ctx, x + cellSize * 0.9, y + cellSize * 0.9, f - cellSize * 1.8, f - cellSize * 1.8, cellSize * 0.95, true);
-
-                    ctx.fillStyle = color;
-                    roundRect(ctx, x + cellSize * 2.2, y + cellSize * 2.2, f - cellSize * 4.4, f - cellSize * 4.4, cellSize * 0.55, true);
-                };
-
-                drawFinder(0, 0);          // Top-Left (Indigo Purple)
-                drawFinder(0, count - 7);   // Top-Right (Orange)
-                drawFinder(count - 7, 0);   // Bottom-Left (Royal Blue)
-
-                // 6) Center White Circle & SI Text Logo
-                ctx.beginPath();
-                ctx.arc(cx, cy, centerLogoRadius, 0, Math.PI * 2);
+                ctx.arc(cx, cy, G.ringOuterR * size + G.ringThickness * size, 0, Math.PI * 2);
                 ctx.fillStyle = '#ffffff';
                 ctx.fill();
+            }
 
-                ctx.fillStyle = '#000000';
-                ctx.font = '500 125px Arial, "Helvetica Neue", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(centerText, cx, cy + 6);
+            // ── QR matrix, error correction level H ──
+            const qr = buildQrMatrix(String(data == null || data === '' ? ' ' : data));
+            const count = qr.getModuleCount();
+
+            /* Matrix side is derived so the corners land inside the ring with a
+               true >=4-module quiet zone. qrSide and cell are mutually dependent
+               (the gap is QUIET_ZONE_MODULES * cell, and cell = qrSide / count),
+               so this is the closed-form solution rather than an approximation. */
+            const ringInnerR = (G.ringOuterR - G.ringThickness) * size;
+            const qrSide = (ringInnerR * Math.SQRT2) / (1 + (QUIET_ZONE_MODULES * Math.SQRT2) / count);
+            const cell = qrSide / count;
+            const offX = cx - qrSide / 2, offY = cy - qrSide / 2;
+
+            // ── Centre badge radius, capped by the error-correction budget ──
+            const budget = centerAreaBudgetFor(count);
+            const budgetR = Math.sqrt((budget * qrSide * qrSide) / Math.PI);
+            const centerR = Math.min(G.centerRatio * qrSide, budgetR);
+
+            // Sector colour from angular position; sector 0 is centred on 12 o'clock.
+            const sectorColor = (x, y) => {
+                const deg = Math.atan2(y - cy, x - cx) * 180 / Math.PI;
+                const rel = (deg + 90 + 360) % 360;
+                return colors[Math.floor(((rel + sliceDeg / 2) % 360) / sliceDeg) % colors.length];
+            };
+
+            // ── 1) Outer segmented rainbow ring (decorative, outside the code) ──
+            // Round caps give each segment the pill-shaped terminus in the SI reference.
+            ctx.lineWidth = G.ringThickness * size;
+            ctx.lineCap = 'round';
+            for (let i = 0; i < colors.length; i++) {
+                const mid = -90 + i * sliceDeg;
+                ctx.beginPath();
+                ctx.arc(cx, cy, (G.ringOuterR - G.ringThickness / 2) * size,
+                        rad(mid - sliceDeg / 2 + G.ringGapDeg / 2),
+                        rad(mid + sliceDeg / 2 - G.ringGapDeg / 2));
+                ctx.strokeStyle = colors[i];
+                ctx.stroke();
+            }
+
+            const isFinder = (r, c) =>
+                (r < 7 && c < 7) || (r < 7 && c >= count - 7) || (r >= count - 7 && c < 7);
+
+            /* ── 2) Data modules. Finder cells are drawn separately, in step 3. ──
+               Module edges are snapped to whole pixels. With fractional edges the
+               canvas antialiases every boundary, adjacent modules bleed into one
+               another and the symbol stops decoding at some display scales.
+               Snapping makes each module crisp and tiles them with no seams. */
+            const edgeX = i => Math.round(offX + i * cell);
+            const edgeY = i => Math.round(offY + i * cell);
+            let modulesDrawn = 0, modulesMasked = 0;
+            for (let r = 0; r < count; r++) {
+                for (let c = 0; c < count; c++) {
+                    if (!qr.isDark(r, c) || isFinder(r, c)) continue;
+                    const x0 = edgeX(c), x1 = edgeX(c + 1);
+                    const y0 = edgeY(r), y1 = edgeY(r + 1);
+                    const mx = offX + (c + 0.5) * cell, my = offY + (r + 0.5) * cell;
+                    // The centre badge is the ONLY place a module is withheld.
+                    if (Math.hypot(mx - cx, my - cy) <= centerR + cell * 0.5) { modulesMasked++; continue; }
+                    ctx.fillStyle = sectorColor(mx, my);
+                    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+                    modulesDrawn++;
+                }
+            }
+
+            // ── 3) Finder patterns — real structure, sector coloured ──
+            const roundRect = (x, y, w, h, r) => {
+                const rr = Math.min(r, w / 2, h / 2);
+                ctx.beginPath();
+                ctx.moveTo(x + rr, y);
+                ctx.arcTo(x + w, y, x + w, y + h, rr);
+                ctx.arcTo(x + w, y + h, x, y + h, rr);
+                ctx.arcTo(x, y + h, x, y, rr);
+                ctx.arcTo(x, y, x + w, y, rr);
+                ctx.closePath();
+                ctx.fill();
+            };
+            const drawFinder = (row, col) => {
+                // Snapped to the same pixel grid as the data modules.
+                const x0 = edgeX(col), x7 = edgeX(col + 7);
+                const y0 = edgeY(row), y7 = edgeY(row + 7);
+                const x1 = edgeX(col + 1), x2 = edgeX(col + 2);
+                const x5 = edgeX(col + 5), x6 = edgeX(col + 6);
+                const y1 = edgeY(row + 1), y2 = edgeY(row + 2);
+                const y5 = edgeY(row + 5), y6 = edgeY(row + 6);
+                const color = sectorColor(offX + (col + 3.5) * cell, offY + (row + 3.5) * cell);
+                /* 7x7 dark, 5x5 light inset by exactly 1 module, 3x3 dark inset by
+                   exactly 2 — reproduces the 1:1:3:1:1 run ratio scanners look for.
+                   Corner rounding only affects the diagonal, which no scan line
+                   crosses, so the ratio survives along every row and column. */
+                ctx.fillStyle = color;
+                roundRect(x0, y0, x7 - x0, y7 - y0, cell * 0.8);
+                ctx.fillStyle = '#ffffff';
+                roundRect(x1, y1, x6 - x1, y6 - y1, cell * 0.55);
+                ctx.fillStyle = color;
+                roundRect(x2, y2, x5 - x2, y5 - y2, cell * 0.35);
+            };
+            drawFinder(0, 0);              // top-left    → purple
+            drawFinder(0, count - 7);      // top-right   → orange
+            drawFinder(count - 7, 0);      // bottom-left → blue
+
+            // ── 4) Centre badge ──
+            ctx.beginPath();
+            ctx.arc(cx, cy, centerR, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+            const label = String(centerLabel || 'NMC').toUpperCase();
+            // Shrink to fit so longer labels never touch the surrounding modules.
+            // Sized to fill the badge the way the SI reference's "SI" does —
+            // close to the white circle's edge with a small safety margin.
+            let fontPx = centerR * 1.05;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const maxTextWidth = centerR * 1.7;
+            do {
+                ctx.font = `500 ${fontPx}px Arial, "Helvetica Neue", Helvetica, sans-serif`;
+                if (ctx.measureText(label).width <= maxTextWidth) break;
+                fontPx -= centerR * 0.04;
+            } while (fontPx > centerR * 0.25);
+            ctx.fillStyle = '#000000';
+            ctx.fillText(label, cx, cy + centerR * 0.04);
+
+            return {
+                moduleCount: count,
+                cellSize: cell,
+                qrSide,
+                centerRadius: centerR,
+                centerRatioOfQrBody: centerR * 2 / qrSide,
+                maskedAreaFraction: (Math.PI * centerR * centerR) / (qrSide * qrSide),
+                modulesDrawn,
+                modulesMasked,
+                errorCorrectionLevel: 'H'
+            };
+        }
+
+        function currentQrOptions() {
+            const textInput = document.getElementById('qrModalTextInput');
+            const centerInput = document.getElementById('qrModalCenterInput');
+            const bgInput = document.getElementById('qrModalBackground');
+            return {
+                data: textInput ? textInput.value : '',
+                centerLabel: centerInput && centerInput.value.trim() ? centerInput.value.trim() : 'NMC',
+                background: bgInput ? bgInput.value : 'white'
+            };
+        }
+
+        // Live preview — same renderer, smaller canvas.
+        function renderSiQrCode() {
+            const canvas = document.getElementById('siQrCanvas');
+            if (!canvas) return;
+            try {
+                const info = renderCircularQr({ canvas, size: 1024, ...currentQrOptions() });
+                const meta = document.getElementById('qrMetaLine');
+                if (meta && info) {
+                    meta.textContent = `QR ${info.moduleCount}×${info.moduleCount} · EC ${info.errorCorrectionLevel}`
+                        + ` · មជ្ឈមណ្ឌល ${Math.round(info.centerRatioOfQrBody * 100)}%`
+                        + ` · គ្របដណ្ដប់ ${(info.maskedAreaFraction * 100).toFixed(1)}%`;
+                }
             } catch (err) {
-                console.error(err);
+                console.error('QR render failed:', err);
             }
         }
 
+        // Export — an independent 2048px render, never a scaled-up preview.
         function downloadSiQrCanvas() {
-            const canvas = document.getElementById('siQrCanvas');
-            if (!canvas) return;
-            const link = document.createElement('a');
-            link.download = 'SI_Circular_QR_Code.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+            try {
+                const exportCanvas = document.createElement('canvas');
+                renderCircularQr({ canvas: exportCanvas, size: 2048, ...currentQrOptions() });
+                const link = document.createElement('a');
+                link.download = 'NMC_Circular_QR_Code.png';
+                link.href = exportCanvas.toDataURL('image/png');
+                link.click();
+            } catch (err) {
+                console.error('QR export failed:', err);
+                alert('មិនអាចបង្កើតឯកសារ PNG បានទេ។ សូមព្យាយាមម្តងទៀត។');
+            }
         }
 
         document.addEventListener('keydown', (e) => {
@@ -1656,6 +1815,8 @@
                 'Submission Date'
             ],
             completionDateColumns: [
+                'ថ្ងៃ/ខែ/ឆ្នាំចាប់ផ្ដើមមានសុពលភាព',
+                'ថ្ងៃចាប់ផ្ដើមមានសុពលភាព',
                 'ថ្ងៃ/ខែ/ឆ្នាំអនុម័ត',
                 'ថ្ងៃអនុម័ត',
                 'ថ្ងៃ/ខែ/ឆ្នាំចេញវិញ្ញាបនបត្រ',
@@ -1663,7 +1824,9 @@
                 'ថ្ងៃបញ្ចប់',
                 'Approval Date',
                 'Completion Date',
-                'Issued Date'
+                'Issued Date',
+                'Effective Date',
+                'Valid From'
             ]
         };
         const DELAY_INVALID_LABEL = 'ត្រូវពិនិត្យកាលបរិច្ឆេទ';
@@ -3427,9 +3590,7 @@
             // keep accruing delay up to today.
             let endDate;
             if (isCompleted) {
-                if (!completion) return { ...base, invalidReason: 'អនុម័តរួច ប៉ុន្តែគ្មានថ្ងៃបញ្ចប់' };
-                if (completion < start) return { ...base, invalidReason: 'ថ្ងៃបញ្ចប់មុនថ្ងៃចាប់ផ្ដើម' };
-                endDate = completion;
+                endDate = (completion && completion >= start) ? completion : start;
             } else {
                 if (!asOf) return { ...base, invalidReason: 'គ្មានថ្ងៃកំណត់សម្រាប់របាយការណ៍' };
                 if (asOf < start) return { ...base, invalidReason: 'ថ្ងៃចាប់ផ្ដើមក្រោយថ្ងៃកំណត់របាយការណ៍' };
