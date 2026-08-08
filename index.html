@@ -1413,14 +1413,15 @@
             canvas.width = size;
             canvas.height = size;
 
+            // 7 exact brand colors matching reference image clockwise from top
             const colors = [
-                '#ca2537', // red top
-                '#f2722e', // orange upper-right
-                '#efba3c', // yellow right/lower-right
-                '#63b346', // green lower-right
-                '#2f72bf', // blue lower-left
-                '#bd31aa', // magenta left/lower-left
-                '#3b1496'  // purple upper-left
+                '#e11624', // Red (top)
+                '#f36f21', // Orange (upper-right)
+                '#ffb800', // Yellow (right)
+                '#76bc21', // Lime Green (lower-right)
+                '#0072ce', // Royal Blue (lower-left)
+                '#d81b8e', // Magenta Pink (left)
+                '#4a1584'  // Deep Indigo Purple (upper-left)
             ];
 
             const text = textInput.value || ' ';
@@ -1449,15 +1450,17 @@
                 const qrClipRadius = qrSide * 0.51;
                 const centerLogoRadius = 125;
 
+                // 1) Outer segmented circular ring geometry
                 const ringRadius = 500;
-                const ringWidth = 58;
-                const gapDeg = 7;
-                const sliceDeg = 360 / colors.length;
-                ctx.lineWidth = ringWidth;
-                ctx.lineCap = 'butt';
+                const ringWidth = 56;
+                const gapDeg = 5;
+                const sliceDeg = 360 / colors.length; // 51.42857°
 
                 const degToRad = (deg) => deg * Math.PI / 180;
 
+                // Draw 7 outer colored arcs
+                ctx.lineWidth = ringWidth;
+                ctx.lineCap = 'butt';
                 for (let i = 0; i < colors.length; i++) {
                     const centerDeg = -90 + i * sliceDeg;
                     const startDeg = centerDeg - sliceDeg / 2 + gapDeg / 2;
@@ -1468,16 +1471,18 @@
                     ctx.stroke();
                 }
 
+                // 2) White isolation gap between outer ring and QR modules
                 ctx.beginPath();
-                ctx.arc(cx, cy, 452, 0, Math.PI * 2);
+                ctx.arc(cx, cy, 454, 0, Math.PI * 2);
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 22;
                 ctx.stroke();
 
+                // Get exact sector color based on angle from center (12 o'clock = sector 0 Red)
                 const getColor = (x, y) => {
-                    let deg = Math.atan2(y - cy, x - cx) * 180 / Math.PI;
-                    deg = (deg + 450) % 360;
-                    const idx = Math.floor((deg + sliceDeg / 2) / sliceDeg) % colors.length;
+                    let deg = Math.atan2(y - cy, x - cx) * 180 / Math.PI; // -180 to +180
+                    let relDeg = (deg + 90 + 360) % 360; // 0 at 12 o'clock, clockwise
+                    const idx = Math.floor(((relDeg + sliceDeg / 2) % 360) / sliceDeg) % colors.length;
                     return colors[idx];
                 };
 
@@ -1492,6 +1497,7 @@
                 const insideMainCircle = (x, y) => Math.hypot(x - cx, y - cy) <= qrClipRadius;
                 const insideCenterLogo = (x, y) => Math.hypot(x - cx, y - cy) <= centerLogoRadius + cellSize * 0.8;
 
+                // 3) Draw QR data modules with sector color pie mapping
                 for (let r = 0; r < count; r++) {
                     for (let c = 0; c < count; c++) {
                         if (!qr.isDark(r, c) || isFinderPattern(r, c)) continue;
@@ -1513,6 +1519,7 @@
                     }
                 }
 
+                // 4) Rounded rectangle helper for finder patterns
                 const roundRect = (ctx, x, y, width, height, radius, fill) => {
                     const r = Math.min(radius, width / 2, height / 2);
                     ctx.beginPath();
@@ -1529,6 +1536,7 @@
                     if (fill) ctx.fill();
                 };
 
+                // 5) Draw 3 finder eyes in exact sector color
                 const drawFinder = (r, c) => {
                     const x = offsetX + c * cellSize;
                     const y = offsetY + r * cellSize;
@@ -1547,17 +1555,18 @@
                     roundRect(ctx, x + cellSize * 2.2, y + cellSize * 2.2, f - cellSize * 4.4, f - cellSize * 4.4, cellSize * 0.55, true);
                 };
 
-                drawFinder(0, 0);
-                drawFinder(0, count - 7);
-                drawFinder(count - 7, 0);
+                drawFinder(0, 0);          // Top-Left (Indigo Purple)
+                drawFinder(0, count - 7);   // Top-Right (Orange)
+                drawFinder(count - 7, 0);   // Bottom-Left (Royal Blue)
 
+                // 6) Center White Circle & SI Text Logo
                 ctx.beginPath();
                 ctx.arc(cx, cy, centerLogoRadius, 0, Math.PI * 2);
                 ctx.fillStyle = '#ffffff';
                 ctx.fill();
 
                 ctx.fillStyle = '#000000';
-                ctx.font = '400 120px Arial, Helvetica, sans-serif';
+                ctx.font = '500 125px Arial, "Helvetica Neue", sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(centerText, cx, cy + 6);
@@ -2040,177 +2049,318 @@
                 });
 
                 // 3. Build Body Children
+                /* ═══════════════════════════════════════════════════════════
+                   OFFICIAL MANAGEMENT REPORT
+                   Page 1 cover + executive summary, then analysis sections,
+                   then appendices. Every figure comes from data.analytics.
+                   ═══════════════════════════════════════════════════════════ */
+                const N = v => toKhmerDigits(formatNumber(v));
+                const KH = "Siemreap";
+
+                const heading = text => new Paragraph({
+                    spacing: { before: 320, after: 140 },
+                    children: [new TextRun({ text, font: "Moul", size: 26, color: "1E3A8A" })]
+                });
+                const body = text => new Paragraph({
+                    indent: { firstLine: 720 }, alignment: AlignmentType.BOTH, spacing: { after: 120 },
+                    children: [new TextRun({ text, font: KH, size: 22 })]
+                });
+                const bullet = text => new Paragraph({
+                    bullet: { level: 0 }, alignment: AlignmentType.BOTH, spacing: { after: 80 },
+                    children: [new TextRun({ text, font: KH, size: 21 })]
+                });
+                const note = text => new Paragraph({
+                    spacing: { before: 80, after: 160 },
+                    children: [new TextRun({ text, font: KH, size: 19, italics: true, color: "475569" })]
+                });
+                const caption = text => new Paragraph({
+                    alignment: AlignmentType.CENTER, spacing: { before: 120, after: 60 },
+                    children: [new TextRun({ text, font: KH, size: 19, bold: true, color: "0F2147" })]
+                });
+                const chartPara = (png, width = 520, height = 250) => new Paragraph({
+                    alignment: AlignmentType.CENTER, spacing: { after: 160 },
+                    children: [new ImageRun({ data: dataUrlToUint8(png), transformation: { width, height } })]
+                });
+                const pageBreak = () => new Paragraph({ children: [new docx.PageBreak()] });
+
+                const app = A.applications, items = A.items, pp = A.processingPerformance, MA = A.managementAnalysis;
+
+                /* ─── PAGE 1 — official cover ─── */
                 const children = [
                     headerTable,
-                    new Paragraph({ spacing: { before: 240, after: 240 } }), // spacer
+                    new Paragraph({ spacing: { before: 360, after: 240 } }),
                     new Paragraph({
                         alignment: AlignmentType.CENTER,
-                        children: [new TextRun({ text: "របាយការណ៍បូកសរុបលទ្ធផលការងារចុះបញ្ជីមាត្រាសាស្ត្រ", font: "Moul", size: 26, color: "1E3A8A", underline: {} })]
+                        children: [new TextRun({ text: "របាយការណ៍ស្តីពី", font: "Moul", size: 30, color: "1E3A8A" })]
                     }),
-                    // When the dashboard is filtered, the report says so explicitly.
-                    ...(data.activeFilterText ? [new Paragraph({
-                        alignment: AlignmentType.CENTER,
-                        spacing: { before: 80 },
-                        children: [new TextRun({ text: `លក្ខខណ្ឌស្វែងរក៖ ${data.activeFilterText}`, font: "Siemreap", size: 20, color: "B45309" })]
-                    })] : []),
-                    new Paragraph({ spacing: { before: 120, after: 120 } }),
                     new Paragraph({
-                        alignment: AlignmentType.CENTER,
-                        children: [
-                            new TextRun({ text: "សូមគោរពជូន\n", font: "Moul", size: 22 }),
-                            new TextRun({ text: "ឯកឧត្តមប្រធាន មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ", font: "Moul", size: 24, color: "1E3A8A" })
-                        ]
+                        alignment: AlignmentType.CENTER, spacing: { before: 80 },
+                        children: [new TextRun({ text: "ស្ថានភាព និងលទ្ធផលនៃការចុះបញ្ជីមាត្រាសាស្ត្រ", font: "Moul", size: 30, color: "1E3A8A", underline: {} })]
                     }),
-                    new Paragraph({ spacing: { before: 240, after: 240 } }),
                     new Paragraph({
-                        indent: { firstLine: 720 },
-                        alignment: AlignmentType.BOTH,
-                        children: [
-                            new TextRun({
-                                text: `តបតាមកម្មវត្ថុខាងលើ នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម មានកិត្តិយសសូមគោរពជម្រាបជូន ឯកឧត្តមប្រធាន មេត្តាជ្រាបថា យោងតាមទិន្នន័យនៃការស្នើសុំចុះបញ្ជីឧបករណ៍មាត្រាសាស្ត្រ និងទំនិញវេចខ្ចប់ ក្រុមការងារបានធ្វើការបូកសរុប និងវិភាគទិន្នន័យ ដែលមានលទ្ធផលលម្អិតដូចខាងក្រោម៖`,
-                                font: "Siemreap",
-                                size: 22
-                            })
-                        ]
+                        alignment: AlignmentType.CENTER, spacing: { before: 160 },
+                        children: [new TextRun({ text: `${A.meta.department} — ${A.meta.institution}`, font: KH, size: 22, bold: true })]
                     }),
-                    new Paragraph({ spacing: { before: 240, after: 240 } }),
-                    new Paragraph({ children: [new TextRun({ text: "១. លទ្ធផលសង្ខេប (KPIs)", font: "Moul", size: 22, color: "1E3A8A" })] })
+                    new Paragraph({ spacing: { before: 240 } })
                 ];
 
-                // KPI Table
-                let kwNewCount = 0, kwRenewalCount = 0;
-                data.companies.forEach(c => {
-                    if (c.registrationType === 'new') kwNewCount++;
-                    else kwRenewalCount++;
-                });
+                // Reporting context block (period / filters / generation date)
+                const contextRows = [];
+                if (A.meta.startDate && A.meta.endDate) {
+                    contextRows.push([{ text: "រយៈពេលទិន្នន័យ" }, { text: A.meta.startDate === A.meta.endDate ? A.meta.startDate : `${A.meta.startDate} ដល់ ${A.meta.endDate}` }]);
+                }
+                if (A.meta.filters.month) contextRows.push([{ text: "ខែ" }, { text: monthNamesKh[A.meta.filters.month - 1] }]);
+                if (A.meta.filters.year) contextRows.push([{ text: "ឆ្នាំ" }, { text: toKhmerDigits(A.meta.filters.year) }]);
+                if (A.meta.filters.location) contextRows.push([{ text: "រាជធានី/ខេត្ត" }, { text: A.meta.filters.location }]);
+                if (A.meta.filters.status) contextRows.push([{ text: "ស្ថានភាព" }, { text: statusDisplayLabel(A.meta.filters.status) }]);
+                if (A.meta.filters.text) contextRows.push([{ text: "ពាក្យស្វែងរក" }, { text: A.meta.filters.text }]);
+                contextRows.push([{ text: "កាលបរិច្ឆេទបង្កើតរបាយការណ៍" }, { text: A.meta.generatedAt }]);
+                if (!A.meta.filterText) contextRows.push([{ text: "វិសាលភាព" }, { text: "ទិន្នន័យទាំងអស់ (មិនបានច្រោះ)" }]);
+                children.push(createWordTable(["ព័ត៌មានរបាយការណ៍", "ព័ត៌មានលម្អិត"], contextRows, [40, 60]));
 
-                const kpiRows = [
-                    [{ text: "១" }, { text: "ចំនួនឧបករណ៍សរុបដែលបានចុះបញ្ជី" }, { text: formatNumber(data.totals.total), bold: true, align: AlignmentType.CENTER }],
-                    [{ text: "២" }, { text: "ឧបករណ៍មាត្រាសាស្ត្រ" }, { text: formatNumber(data.totals.toolsCount), bold: true, align: AlignmentType.CENTER }],
-                    [{ text: "៣" }, { text: "ទំនិញវេចខ្ចប់" }, { text: formatNumber(data.totals.packageCount), bold: true, align: AlignmentType.CENTER }],
-                    [{ text: "៤" }, { text: "កំពុងរង់ចាំការអនុម័ត (គិតជាសំណុំឯកសារ)" }, { text: formatNumber(data.totals.pendingCount), bold: true, align: AlignmentType.CENTER }],
-                    [{ text: "៥" }, { text: "ចំនួនសរុបក្រុមហ៊ុន/សហគ្រាសដែលបានដាក់ស្នើចុះបញ្ជី" }, { text: formatNumber(data.totals.companyCount), bold: true, align: AlignmentType.CENTER }],
-                    [{ text: "៦" }, { text: "ចំនួនក្រុមហ៊ុន/សហគ្រាសដែលបានអនុម័តរួច" }, { text: formatNumber(data.totals.approvedCompanyCount), bold: true, align: AlignmentType.CENTER }],
-                    [{ text: "៧" }, { text: "ការចុះបញ្ជីថ្មី" }, { text: formatNumber(kwNewCount), bold: true, align: AlignmentType.CENTER }],
-                    [{ text: "៨" }, { text: "ការចុះបញ្ជីបន្ត" }, { text: formatNumber(kwRenewalCount), bold: true, align: AlignmentType.CENTER }]
-                ];
-
-                children.push(createWordTable(["ល.រ", "សូចនាករគន្លឹះ (KPIs)", "លទ្ធផលសរុប"], kpiRows, [10, 60, 30]));
-
-                // Narrative analysis
-                children.push(new Paragraph({ spacing: { before: 240, after: 120 } }));
+                children.push(new Paragraph({ spacing: { before: 320, after: 160 } }));
                 children.push(new Paragraph({
-                    indent: { firstLine: 720 },
-                    alignment: AlignmentType.BOTH,
-                    children: [new TextRun({ text: generateNarrative(data), font: "Siemreap", size: 22 })]
+                    alignment: AlignmentType.CENTER,
+                    children: [
+                        new TextRun({ text: "សូមគោរពជូន\n", font: "Moul", size: 22 }),
+                        new TextRun({ text: "ឯកឧត្តមប្រធាន មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ", font: "Moul", size: 24, color: "1E3A8A" })
+                    ]
                 }));
+                children.push(new Paragraph({ spacing: { before: 200 } }));
+                children.push(body("តបតាមកម្មវត្ថុខាងលើ នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម មានកិត្តិយសសូមគោរពជម្រាបជូន ឯកឧត្តមប្រធាន មេត្តាជ្រាបថា យោងតាមទិន្នន័យនៃការស្នើសុំចុះបញ្ជីឧបករណ៍មាត្រាសាស្ត្រ និងទំនិញវេចខ្ចប់ ក្រុមការងារបានធ្វើការបូកសរុប និងវិភាគទិន្នន័យ ដែលមានលទ្ធផលលម្អិតដូចខាងក្រោម៖"));
 
-                // Images table (side-by-side)
-                children.push(new Paragraph({ spacing: { before: 240, after: 120 } }));
-                children.push(new Paragraph({ children: [new TextRun({ text: "២. ក្រាហ្វិកវិភាគទិន្នន័យ", font: "Moul", size: 22, color: "1E3A8A" })] }));
+                /* ─── ១. Executive summary ─── */
+                children.push(heading("១. សេចក្តីសង្ខេបលទ្ធផល"));
+                const kpiRows = [
+                    [{ text: "១" }, { text: "ចំនួនក្រុមហ៊ុន/សហគ្រាសបានដាក់ស្នើចុះបញ្ជី" }, { text: N(app.total), bold: true, align: AlignmentType.CENTER }, { text: "១០០.០%", align: AlignmentType.CENTER }],
+                    [{ text: "២" }, { text: "ចំនួនក្រុមហ៊ុនដែលបានអនុម័តរួច" }, { text: N(app.completed), bold: true, align: AlignmentType.CENTER }, { text: khPct(app.completed, app.total), align: AlignmentType.CENTER }],
+                    [{ text: "៣" }, { text: "កំពុងរង់ចាំការអនុម័ត / កំពុងដំណើរការ" }, { text: N(app.pending), bold: true, align: AlignmentType.CENTER }, { text: khPct(app.pending, app.total), align: AlignmentType.CENTER }],
+                    [{ text: "៤" }, { text: "ការចុះបញ្ជីថ្មី" }, { text: N(app.newRegistration), bold: true, align: AlignmentType.CENTER }, { text: khPct(app.newRegistration, app.total), align: AlignmentType.CENTER }],
+                    [{ text: "៥" }, { text: "ការចុះបញ្ជីបន្ត" }, { text: N(app.renewal), bold: true, align: AlignmentType.CENTER }, { text: khPct(app.renewal, app.total), align: AlignmentType.CENTER }],
+                    [{ text: "៦" }, { text: "ចំនួនឧបករណ៍/ទំនិញសរុប" }, { text: N(items.total), bold: true, align: AlignmentType.CENTER }, { text: "១០០.០%", align: AlignmentType.CENTER }],
+                    [{ text: "៧" }, { text: "ឧបករណ៍មាត្រាសាស្ត្រ" }, { text: N(items.instruments), bold: true, align: AlignmentType.CENTER }, { text: khPct(items.instruments, items.total), align: AlignmentType.CENTER }],
+                    [{ text: "៨" }, { text: "ទំនិញវេចខ្ចប់" }, { text: N(items.packagedGoods), bold: true, align: AlignmentType.CENTER }, { text: khPct(items.packagedGoods, items.total), align: AlignmentType.CENTER }],
+                    [{ text: "៩" }, { text: `ឯកសារលើសរយៈពេលកំណត់ ${toKhmerDigits(pp.standardDays)} ថ្ងៃ` }, { text: N(pp.delayed), bold: true, align: AlignmentType.CENTER }, { text: pp.measurableApplications ? khPct(pp.delayed, pp.measurableApplications) : '-', align: AlignmentType.CENTER }]
+                ];
+                children.push(createWordTable(["ល.រ", "សូចនាករសំខាន់", "ចំនួន", "ភាគរយ"], kpiRows, [8, 56, 18, 18]));
+                children.push(note("ចំណាំ៖ ភាគរយនៃជួរទី ១–៥ គិតធៀបនឹងចំនួនក្រុមហ៊ុនសរុប ជួរទី ៦–៨ គិតធៀបនឹងចំនួនធាតុសរុប និងជួរទី ៩ គិតធៀបនឹងសំណើដែលអាចគណនារយៈពេលបាន។"));
+                MA.executiveSummary.forEach(p => children.push(body(p)));
 
-                const imageCells = [];
-                if (monthlyImg) {
-                    imageCells.push(new TableCell({
-                        width: { size: 50, type: WidthType.PERCENTAGE },
-                        children: [
-                            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "ក្រាហ្វិកបង្ហាញចំនួនស្នើសុំចុះបញ្ជីប្រចាំខែ", font: "Moul", size: 16 })] }),
-                            new Paragraph({
-                                alignment: AlignmentType.CENTER,
-                                children: [new ImageRun({
-                                    data: base64ToUint8(monthlyImg),
-                                    transformation: { width: 280, height: 160 }
-                                })]
-                            })
-                        ]
-                    }));
-                }
-                if (statusImg) {
-                    imageCells.push(new TableCell({
-                        width: { size: 50, type: WidthType.PERCENTAGE },
-                        children: [
-                            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "ស្ថានភាពឯកសារ", font: "Moul", size: 16 })] }),
-                            new Paragraph({
-                                alignment: AlignmentType.CENTER,
-                                children: [new ImageRun({
-                                    data: base64ToUint8(statusImg),
-                                    transformation: { width: 180, height: 160 }
-                                })]
-                            })
-                        ]
-                    }));
-                }
-
-                if (imageCells.length > 0) {
-                    children.push(new Table({
-                        width: { size: 100, type: WidthType.PERCENTAGE },
-                        borders: {
-                            top: { style: BorderStyle.NONE },
-                            left: { style: BorderStyle.NONE },
-                            bottom: { style: BorderStyle.NONE },
-                            right: { style: BorderStyle.NONE },
-                            insideHorizontal: { style: BorderStyle.NONE },
-                            insideVertical: { style: BorderStyle.NONE }
-                        },
-                        rows: [new TableRow({ children: imageCells })]
-                    }));
+                /* ─── ២. Registration status ─── */
+                children.push(pageBreak());
+                children.push(heading("២. ស្ថានភាពនៃការស្នើសុំចុះបញ្ជី"));
+                children.push(createWordTable(
+                    ["ល.រ", "ស្ថានភាព", "ចំនួនសំណើ", "ភាគរយ"],
+                    A.statusAnalysis.map((s, i) => [
+                        { text: toKhmerDigits(i + 1), align: AlignmentType.CENTER },
+                        { text: s.label },
+                        { text: N(s.count), align: AlignmentType.CENTER, bold: true },
+                        { text: `${toKhmerDigits(s.percent.toFixed(1))}%`, align: AlignmentType.CENTER }
+                    ]), [10, 45, 22, 23]
+                ));
+                if (reportCharts.status) { children.push(caption("ក្រាហ្វិក ១៖ ការចែកចាយស្ថានភាពសំណើ")); children.push(chartPara(reportCharts.status, 520, 245)); }
+                if (A.statusAnalysis.length) {
+                    const topStatus = A.statusAnalysis[0];
+                    children.push(body(`ស្ថានភាព «${topStatus.label}» មានសមាមាត្រខ្ពស់បំផុតគឺ ${N(topStatus.count)} សំណើ ស្មើនឹង ${khPct(topStatus.count, app.total)} នៃសំណើសរុប។ សំណើដែលកំពុងស្ថិតក្នុងដំណើរការមានចំនួន ${N(app.pending)} ស្មើនឹង ${khPct(app.pending, app.total)} ដែលជាបន្ទុកការងារត្រូវបន្តតាមដាន។`));
                 }
 
-                // Add Province Chart
-                if (provinceImg) {
-                    children.push(new Paragraph({ spacing: { before: 240, after: 120 } }));
-                    children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "ក្រាហ្វិកបង្ហាញចំនួនក្រុមហ៊ុន/សហគ្រាសតាមរាជធានី/ខេត្ត", font: "Moul", size: 16 })] }));
-                    children.push(new Paragraph({
-                        alignment: AlignmentType.CENTER,
-                        children: [new ImageRun({
-                            data: base64ToUint8(provinceImg),
-                            transformation: { width: 500, height: 260 }
-                        })]
-                    }));
-                }
+                /* ─── ៣. New vs renewal ─── */
+                children.push(heading("៣. ការចុះបញ្ជីថ្មី និងការចុះបញ្ជីបន្ត"));
+                const regRows = [
+                    [{ text: "ការចុះបញ្ជីថ្មី" }, { text: N(app.newRegistration), align: AlignmentType.CENTER, bold: true }, { text: khPct(app.newRegistration, app.total), align: AlignmentType.CENTER }],
+                    [{ text: "ការចុះបញ្ជីបន្ត" }, { text: N(app.renewal), align: AlignmentType.CENTER, bold: true }, { text: khPct(app.renewal, app.total), align: AlignmentType.CENTER }]
+                ];
+                if (app.unspecifiedRegistration > 0) regRows.push([{ text: "មិនបានបញ្ជាក់" }, { text: N(app.unspecifiedRegistration), align: AlignmentType.CENTER, bold: true }, { text: khPct(app.unspecifiedRegistration, app.total), align: AlignmentType.CENTER }]);
+                regRows.push([{ text: "សរុប", bold: true }, { text: N(app.total), align: AlignmentType.CENTER, bold: true }, { text: "១០០.០%", align: AlignmentType.CENTER, bold: true }]);
+                children.push(createWordTable(["ប្រភេទ", "ចំនួន", "ភាគរយ"], regRows, [50, 25, 25]));
+                if (reportCharts.registrationType) { children.push(caption("ក្រាហ្វិក ២៖ ការចុះបញ្ជីថ្មី និងការចុះបញ្ជីបន្ត")); children.push(chartPara(reportCharts.registrationType, 400, 210)); }
+                children.push(body(`ការចុះបញ្ជីបន្តមានចំនួន ${N(app.renewal)} ស្មើនឹង ${khPct(app.renewal, app.total)} នៃសំណើសរុប ខណៈការចុះបញ្ជីថ្មីមានចំនួន ${N(app.newRegistration)} ស្មើនឹង ${khPct(app.newRegistration, app.total)}។`));
+                children.push(note("ចំណាំ៖ ប្រភេទចុះបញ្ជីត្រូវបានសន្និដ្ឋានពីការប្រៀបធៀបឆ្នាំ ដោយសារឯកសារប្រភពគ្មានជួរឈរបញ្ជាក់ច្បាស់លាស់។"));
 
-                // Province Table
-                children.push(new Paragraph({ spacing: { before: 240, after: 120 } }));
-                children.push(new Paragraph({ children: [new TextRun({ text: "៣. បញ្ជីរាយនាមក្រុមហ៊ុន/សហគ្រាសតាមរាជធានី/ខេត្ត", font: "Moul", size: 22, color: "1E3A8A" })] }));
+                /* ─── ៤. Registered items ─── */
+                children.push(pageBreak());
+                children.push(heading("៤. ស្ថានភាពឧបករណ៍ និងទំនិញវេចខ្ចប់"));
+                const itemRows2 = [
+                    [{ text: "ឧបករណ៍មាត្រាសាស្ត្រ" }, { text: N(items.instruments), align: AlignmentType.CENTER, bold: true }, { text: khPct(items.instruments, items.total), align: AlignmentType.CENTER }],
+                    [{ text: "ទំនិញវេចខ្ចប់" }, { text: N(items.packagedGoods), align: AlignmentType.CENTER, bold: true }, { text: khPct(items.packagedGoods, items.total), align: AlignmentType.CENTER }]
+                ];
+                if (items.unclassified > 0) itemRows2.push([{ text: "មិនបានចាត់ថ្នាក់" }, { text: N(items.unclassified), align: AlignmentType.CENTER, bold: true }, { text: khPct(items.unclassified, items.total), align: AlignmentType.CENTER }]);
+                itemRows2.push([{ text: "សរុប", bold: true }, { text: N(items.total), align: AlignmentType.CENTER, bold: true }, { text: "១០០.០%", align: AlignmentType.CENTER, bold: true }]);
+                children.push(createWordTable(["ប្រភេទ", "ចំនួន", "ភាគរយ"], itemRows2, [50, 25, 25]));
+                if (reportCharts.itemMix) { children.push(caption("ក្រាហ្វិក ៣៖ សមាមាត្រឧបករណ៍មាត្រាសាស្ត្រ និងទំនិញវេចខ្ចប់")); children.push(chartPara(reportCharts.itemMix, 520, 245)); }
+                children.push(body(`ជាមធ្យម សំណើនីមួយៗមានធាតុចំនួន ${toKhmerDigits(items.averagePerApplication)} មុខ។ សំណើធំបំផុតគឺ ${cleanText(items.largestApplication.company, 'មិនបានបញ្ជាក់')} ដែលមានធាតុចំនួន ${N(items.largestApplication.totalItems || 0)} មុខ។`));
 
-                const sortedProvinces = [...data.provinces];
-                const provinceRows = [];
-                let otherTotal = 0, otherNew = 0, otherRenewal = 0;
-                sortedProvinces.forEach((p, idx) => {
-                    if (idx < 5) {
-                        provinceRows.push(p);
-                    } else {
-                        otherTotal += p.total;
-                        otherNew += p.newCount;
-                        otherRenewal += p.renewalCount;
-                    }
-                });
-                if (otherTotal > 0) {
-                    provinceRows.push({
-                        province: 'ផ្សេងៗ (Others)',
-                        total: otherTotal,
-                        newCount: otherNew,
-                        renewalCount: otherRenewal
-                    });
-                }
-
-                const wordProvRows = provinceRows.map((p, idx) => {
-                    const ratio = ((p.total / data.totals.companyCount) * 100).toFixed(1) + '%';
-                    return [
-                        { text: toKhmerDigits(idx + 1), align: AlignmentType.CENTER },
+                /* ─── ៥. Province analysis ─── */
+                children.push(heading("៥. ការចុះបញ្ជីតាមរាជធានី/ខេត្ត"));
+                children.push(createWordTable(
+                    ["ល.រ", "រាជធានី/ខេត្ត", "ក្រុមហ៊ុន", "ធាតុ", "ភាគរយ", "អនុម័ត", "កំពុងដំណើរការ"],
+                    A.provinceAnalysis.map((p, i) => [
+                        { text: toKhmerDigits(i + 1), align: AlignmentType.CENTER },
                         { text: p.province },
-                        { text: formatNumber(p.total), align: AlignmentType.CENTER, bold: true },
-                        { text: formatNumber(p.newCount), align: AlignmentType.CENTER },
-                        { text: formatNumber(p.renewalCount), align: AlignmentType.CENTER },
-                        { text: toKhmerDigits(ratio), align: AlignmentType.CENTER }
-                    ];
-                });
+                        { text: N(p.applications), align: AlignmentType.CENTER, bold: true },
+                        { text: N(p.items), align: AlignmentType.CENTER },
+                        { text: `${toKhmerDigits(p.percent.toFixed(1))}%`, align: AlignmentType.CENTER },
+                        { text: N(p.completed), align: AlignmentType.CENTER },
+                        { text: N(p.pending), align: AlignmentType.CENTER }
+                    ]), [8, 26, 14, 12, 13, 13, 14]
+                ));
+                if (reportCharts.province) { children.push(caption("ក្រាហ្វិក ៤៖ ចំនួនសំណើតាមរាជធានី/ខេត្ត")); children.push(chartPara(reportCharts.province, 520, Math.min(300, 60 + Math.min(10, A.provinceAnalysis.length) * 22))); }
+                if (A.provinceAnalysis.length) {
+                    const t = A.provinceAnalysis[0];
+                    children.push(body(`រាជធានី/ខេត្តដែលមានសំណើច្រើនជាងគេគឺ ${t.province} ចំនួន ${N(t.applications)} សំណើ ស្មើនឹង ${khPct(t.applications, app.total)} នៃសំណើសរុប ក្នុងនោះបានអនុម័តរួច ${N(t.completed)} និងកំពុងដំណើរការ ${N(t.pending)}។ សំណើត្រូវបានចែកចាយលើ ${N(A.provinceAnalysis.length)} រាជធានី/ខេត្ត។`));
+                }
+
+                /* ─── ៦. Intake trend ─── */
+                children.push(pageBreak());
+                children.push(heading("៦. និន្នាការនៃការដាក់ស្នើ"));
+                if (reportCharts.intake) { children.push(caption(`ក្រាហ្វិក ៥៖ ${A.intakeAnalysis.title}`)); children.push(chartPara(reportCharts.intake, 540, 230)); }
+                if (A.intakeAnalysis.busiest) {
+                    const unitWord = A.intakeAnalysis.granularity === 'daily' ? 'ថ្ងៃ' : 'ខែ';
+                    children.push(body(`ទិន្នន័យគ្របដណ្តប់ចាប់ពី ${A.meta.startDate} ដល់ ${A.meta.endDate} រួមមាន ${N(A.intakeAnalysis.distinctPeriods)} ${unitWord}ដែលមានសំណើ។ ${unitWord}ដែលមានសំណើច្រើនជាងគេគឺ ${A.intakeAnalysis.busiest.key} ចំនួន ${N(A.intakeAnalysis.busiest.count)} សំណើ និង${unitWord}ដែលមានសំណើតិចជាងគេគឺ ${A.intakeAnalysis.quietest.key} ចំនួន ${N(A.intakeAnalysis.quietest.count)} សំណើ។`));
+                }
+                if (A.intakeAnalysis.granularity === 'daily') {
+                    children.push(note("ចំណាំ៖ ទិន្នន័យគ្របដណ្តប់តែមួយខែប៉ុណ្ណោះ ដូច្នេះការវិភាគត្រូវបានធ្វើតាមថ្ងៃ ហើយមិនអាចបង្ហាញនិន្នាការប្រចាំខែបានឡើយ។"));
+                }
+
+                /* ─── ៧. Processing performance ─── */
+                children.push(heading("៧. ការវិភាគរយៈពេលដំណើរការឯកសារ"));
+                children.push(body(`រយៈពេលស្តង់ដារសម្រាប់ការពិនិត្យគឺ ${toKhmerDigits(pp.standardDays)} ថ្ងៃ។ ការយឺតត្រូវបានគណនាតាមរូបមន្ត៖ ថ្ងៃយឺត = អតិបរមា(០, ថ្ងៃដំណើរការ − ${toKhmerDigits(pp.standardDays)})។ សំណើដែលអនុម័តរួច ឈប់រាប់ថ្ងៃនៅថ្ងៃបញ្ចប់ ចំណែកសំណើកំពុងដំណើរការ រាប់ដល់ថ្ងៃកំណត់របាយការណ៍ (${pp.asOfDate})។`));
+                children.push(createWordTable(["សូចនាករ", "លទ្ធផល"], [
+                    [{ text: "សំណើសរុប" }, { text: N(app.total), align: AlignmentType.CENTER, bold: true }],
+                    [{ text: "សំណើដែលអាចគណនារយៈពេលបាន" }, { text: N(pp.measurableApplications), align: AlignmentType.CENTER, bold: true }],
+                    [{ text: `ក្នុងស្តង់ដារ ${toKhmerDigits(pp.standardDays)} ថ្ងៃ` }, { text: N(pp.withinStandard), align: AlignmentType.CENTER }],
+                    [{ text: `លើសស្តង់ដារ ${toKhmerDigits(pp.standardDays)} ថ្ងៃ` }, { text: N(pp.delayed), align: AlignmentType.CENTER, bold: true }],
+                    [{ text: "យឺតខ្ពស់បំផុត" }, { text: `${N(pp.highestDelay)} ថ្ងៃ`, align: AlignmentType.CENTER, bold: true }],
+                    [{ text: "មធ្យមភាគនៃការយឺត" }, { text: `${N(pp.averageDelay)} ថ្ងៃ`, align: AlignmentType.CENTER }],
+                    [{ text: "មធ្យមកណ្ដាល (Median)" }, { text: `${N(pp.medianDelay)} ថ្ងៃ`, align: AlignmentType.CENTER }]
+                ], [60, 40]));
+                children.push(note(`ការវិភាគនេះផ្អែកលើសំណើចំនួន ${N(pp.measurableApplications)} ដែលមានទិន្នន័យគ្រប់គ្រាន់សម្រាប់គណនារយៈពេល ក្នុងចំណោមសំណើសរុប ${N(app.total)}។ សំណើចំនួន ${N(A.dataQuality.invalidProcessingDates)} មិនត្រូវបានរាប់បញ្ចូលក្នុងស្ថិតិនេះឡើយ។`));
 
                 children.push(createWordTable(
-                    ["ល.រ", "រាជធានី/ខេត្ត", "សរុប", "ការចុះបញ្ជីថ្មី", "ការចុះបញ្ជីបន្ត", "សមាមាត្រ (%)"],
-                    wordProvRows,
-                    [10, 35, 15, 15, 15, 10]
+                    ["ចន្លោះរយៈពេលយឺត", "ចំនួនសំណើ", "ភាគរយ"],
+                    pp.bands.map(b => [
+                        { text: b.label },
+                        { text: N(b.count), align: AlignmentType.CENTER, bold: true },
+                        { text: pp.measurableApplications ? khPct(b.count, pp.measurableApplications) : '-', align: AlignmentType.CENTER }
+                    ]), [50, 25, 25]
                 ));
+                if (reportCharts.delay) { children.push(caption("ក្រាហ្វិក ៦៖ ការចែកចាយរយៈពេលយឺត")); children.push(chartPara(reportCharts.delay, 520, 230)); }
+
+                /* ─── Management attention table (top 20) ─── */
+                if (pp.records.length) {
+                    children.push(heading("៨. តារាងឯកសារដែលត្រូវការការយកចិត្តទុកដាក់"));
+                    const top20 = pp.records.slice(0, 20);
+                    children.push(createWordTable(
+                        ["ល.រ", "ក្រុមហ៊ុន/សហគ្រាស", "រាជធានី/ខេត្ត", "ថ្ងៃទទួល", "ស្ថានភាព", "ថ្ងៃដំណើរការ", "ថ្ងៃយឺត"],
+                        top20.map((r, i) => [
+                            { text: toKhmerDigits(i + 1), align: AlignmentType.CENTER },
+                            { text: cleanText(r.company, 'មិនបានបញ្ជាក់') },
+                            { text: r.province },
+                            { text: r.startDate, align: AlignmentType.CENTER },
+                            { text: r.status },
+                            { text: N(r.processingDays), align: AlignmentType.CENTER },
+                            { text: N(r.delayDays), align: AlignmentType.CENTER, bold: true }
+                        ]), [6, 28, 14, 14, 16, 11, 11]
+                    ));
+                    if (pp.records.length > 20) children.push(note(`បង្ហាញ ២០ ករណីយឺតខ្ពស់បំផុត ក្នុងចំណោម ${N(pp.records.length)} ករណី។ បញ្ជីពេញលេញមាននៅឧបសម្ព័ន្ធ ២។`));
+                }
+
+                /* ─── ៩. Key findings ─── */
+                children.push(pageBreak());
+                children.push(heading("៩. ការវាយតម្លៃ និងចំណុចគួរយកចិត្តទុកដាក់"));
+                MA.keyFindings.forEach(f => children.push(bullet(f)));
+
+                /* ─── ១០. Recommendations ─── */
+                children.push(heading("១០. សំណើ និងទិសដៅអនុវត្តបន្ត"));
+                MA.recommendations.forEach((r, i) => children.push(bullet(`${toKhmerDigits(i + 1)}. ${r}`)));
+
+                /* ─── ១១. Data quality ─── */
+                children.push(heading("១១. កំណត់សម្គាល់អំពីគុណភាពទិន្នន័យ"));
+                if (MA.dataQualityNotes.length) MA.dataQualityNotes.forEach(n => children.push(bullet(n)));
+                else children.push(body("មិនមានបញ្ហាគុណភាពទិន្នន័យសំខាន់ៗត្រូវបានរកឃើញឡើយ។"));
+                const failedChecks = A.crossChecks.filter(c => !c.pass);
+                children.push(note(failedChecks.length
+                    ? `ការត្រួតពិនិត្យផ្ទៃក្នុង៖ មាន ${N(failedChecks.length)} ចំណុចមិនស៊ីគ្នា។`
+                    : `ការត្រួតពិនិត្យផ្ទៃក្នុងទាំង ${N(A.crossChecks.length)} ចំណុច ស៊ីគ្នាទាំងអស់។`));
+
+                /* ─── Appendices ─── */
+                children.push(pageBreak());
+                children.push(heading("ឧបសម្ព័ន្ធ ១៖ បញ្ជីលម្អិតសំណើ/ក្រុមហ៊ុន"));
+                children.push(createWordTable(
+                    ["ល.រ", "ក្រុមហ៊ុន/សហគ្រាស", "រាជធានី/ខេត្ត", "ថ្ងៃទទួល", "ប្រភេទ", "ស្ថានភាព", "ធាតុ"],
+                    data.companies.map((c, i) => [
+                        { text: toKhmerDigits(i + 1), align: AlignmentType.CENTER },
+                        { text: cleanText(c.company, 'មិនបានបញ្ជាក់') },
+                        { text: c.province },
+                        { text: c.regDate, align: AlignmentType.CENTER },
+                        { text: c.registrationType === 'new' ? 'ថ្មី' : 'បន្ត', align: AlignmentType.CENTER },
+                        { text: c.status },
+                        { text: N(c.totalItems), align: AlignmentType.CENTER }
+                    ]), [6, 30, 14, 14, 10, 16, 10]
+                ));
+
+                if (pp.records.length) {
+                    children.push(pageBreak());
+                    children.push(heading("ឧបសម្ព័ន្ធ ២៖ បញ្ជីពេញលេញនៃឯកសារយឺត"));
+                    children.push(createWordTable(
+                        ["ល.រ", "ក្រុមហ៊ុន/សហគ្រាស", "រាជធានី/ខេត្ត", "ថ្ងៃចាប់ផ្ដើម", "ថ្ងៃបញ្ចប់/កំណត់", "ដំណើរការ", "យឺត"],
+                        pp.records.map((r, i) => [
+                            { text: toKhmerDigits(i + 1), align: AlignmentType.CENTER },
+                            { text: cleanText(r.company, 'មិនបានបញ្ជាក់') },
+                            { text: r.province },
+                            { text: r.startDate, align: AlignmentType.CENTER },
+                            { text: r.endDate, align: AlignmentType.CENTER },
+                            { text: N(r.processingDays), align: AlignmentType.CENTER },
+                            { text: N(r.delayDays), align: AlignmentType.CENTER, bold: true }
+                        ]), [6, 28, 14, 14, 14, 12, 12]
+                    ));
+                }
+
+                children.push(pageBreak());
+                children.push(heading("ឧបសម្ព័ន្ធ ៣៖ ស្ថិតិតាមរាជធានី/ខេត្ត"));
+                children.push(createWordTable(
+                    ["ល.រ", "រាជធានី/ខេត្ត", "ក្រុមហ៊ុន", "អនុម័ត", "ដំណើរការ", "ថ្មី", "បន្ត", "ឧបករណ៍", "ទំនិញ"],
+                    A.provinceAnalysis.map((p, i) => [
+                        { text: toKhmerDigits(i + 1), align: AlignmentType.CENTER },
+                        { text: p.province },
+                        { text: N(p.applications), align: AlignmentType.CENTER, bold: true },
+                        { text: N(p.completed), align: AlignmentType.CENTER },
+                        { text: N(p.pending), align: AlignmentType.CENTER },
+                        { text: N(p.newCount), align: AlignmentType.CENTER },
+                        { text: N(p.renewalCount), align: AlignmentType.CENTER },
+                        { text: N(p.instruments), align: AlignmentType.CENTER },
+                        { text: N(p.packagedGoods), align: AlignmentType.CENTER }
+                    ]), [6, 22, 11, 10, 12, 8, 8, 11, 12]
+                ));
+
+                if (A.itemPortfolio.length) {
+                    children.push(pageBreak());
+                    children.push(heading("ឧបសម្ព័ន្ធ ៤៖ បញ្ជីឧបករណ៍ និងទំនិញវេចខ្ចប់"));
+                    children.push(createWordTable(
+                        ["ល.រ", "ឈ្មោះឧបករណ៍/ទំនិញ", "ប្រភេទ", "ចំនួន", "ភាគរយ"],
+                        A.itemPortfolio.slice(0, 60).map((x, i) => [
+                            { text: toKhmerDigits(i + 1), align: AlignmentType.CENTER },
+                            { text: x.name },
+                            { text: x.kind },
+                            { text: N(x.count), align: AlignmentType.CENTER, bold: true },
+                            { text: `${toKhmerDigits(x.percent.toFixed(1))}%`, align: AlignmentType.CENTER }
+                        ]), [8, 42, 22, 14, 14]
+                    ));
+                    if (A.itemPortfolio.length > 60) children.push(note(`បង្ហាញ ៦០ ធាតុដំបូង ក្នុងចំណោម ${N(A.itemPortfolio.length)} ធាតុ។`));
+                }
+
+                children.push(pageBreak());
+                children.push(heading("ឧបសម្ព័ន្ធ ៥៖ ករណីលើកលែងខាងគុណភាពទិន្នន័យ"));
+                const q = A.dataQuality;
+                children.push(createWordTable(["ប្រភេទបញ្ហា", "ចំនួន"], [
+                    [{ text: "សំណើគ្មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់គណនារយៈពេល" }, { text: N(q.invalidProcessingDates), align: AlignmentType.CENTER, bold: true }],
+                    [{ text: "សំណើគ្មានឈ្មោះក្រុមហ៊ុន/សហគ្រាស" }, { text: N(q.missingCompanyName), align: AlignmentType.CENTER }],
+                    [{ text: "ជួរធាតុគ្មានឈ្មោះឧបករណ៍/ទំនិញ" }, { text: N(q.missingItemName), align: AlignmentType.CENTER }],
+                    [{ text: "ជួរធាតុមាន «ប្រទេសផលិតដើម» ជាលេខ" }, { text: N(q.numericOriginCountry), align: AlignmentType.CENTER }],
+                    [{ text: "ជួរធាតុមាន «ឆ្នាំផលិត» មិនត្រឹមត្រូវ" }, { text: N(q.invalidManufactureYear), align: AlignmentType.CENTER }],
+                    [{ text: "ជួរធាតុគ្មាន «កម្រិតលម្អៀង/សុក្រឹតភាព»" }, { text: N(q.missingAccuracyClass), align: AlignmentType.CENTER }]
+                ], [70, 30]));
+                children.push(note(`គិតលើជួរធាតុសរុប ${N(q.totalItemRows)} និងសំណើសរុប ${N(app.total)}។`));
 
                 // Signature
                 children.push(new Paragraph({ spacing: { before: 480, after: 480 } }));
@@ -2338,6 +2488,21 @@
                             }
                         });
                     });
+                    // Header stays visible, columns are filterable, and the sheet
+                    // prints as an A4 landscape page with the header repeated.
+                    try {
+                        const lastCol = String.fromCharCode(64 + Math.min(colsCount, 26));
+                        ws.views = [{ state: 'frozen', ySplit: startRow, showGridLines: false }];
+                        ws.autoFilter = { from: { row: startRow, column: 1 }, to: { row: startRow, column: colsCount } };
+                        ws.pageSetup = {
+                            ...(ws.pageSetup || {}),
+                            paperSize: 9, orientation: 'landscape',
+                            fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+                            margins: { left: 0.4, right: 0.4, top: 0.6, bottom: 0.5, header: 0.3, footer: 0.3 }
+                        };
+                        ws.pageSetup.printTitlesRow = `${startRow}:${startRow}`;
+                        ws.pageSetup.printArea = `A1:${lastCol}${ws.rowCount}`;
+                    } catch (e) { console.warn('Sheet print setup skipped:', e); }
                 }
 
                 // Helper for autofit widths
@@ -2385,159 +2550,163 @@
                     }
                 }
 
-                // Sheet 1: Dashboard
-                const wsDash = workbook.addWorksheet('Dashboard');
-                wsDash.views = [{ showGridLines: true }];
-                wsDash.getCell('B2').value = 'របាយការណ៍សង្ខេបលទ្ធផលចុះបញ្ជីមាត្រាសាស្ត្រជាតិ';
-                wsDash.getCell('B2').font = { name: fontName, size: 16, bold: true, color: { argb: 'FF1E3A8A' } };
-                wsDash.getCell('B3').value = data.activeFilterText
-                    ? `រយៈពេលរបាយការណ៍៖ ${data.period}  |  លក្ខខណ្ឌស្វែងរក៖ ${data.activeFilterText}`
-                    : `រយៈពេលរបាយការណ៍៖ ${data.period}`;
-                wsDash.getCell('B3').font = { name: fontName, size: 10, italic: true };
+                /* ═══════════════════════════════════════════════════════════
+                   SHEET 1 — EXECUTIVE DASHBOARD
+                   A printable management summary, not a data dump.
+                   ═══════════════════════════════════════════════════════════ */
+                const A = data.analytics;
+                const appX = A.applications, itX = A.items, ppX = A.processingPerformance;
+                const reportChartsX = await buildReportCharts(A);
 
-                formatKpiCard(wsDash, 'B', 'ចំនួនឧបករណ៍សរុប', data.totals.total, 'FFF1F5F9');
-                formatKpiCard(wsDash, 'C', 'ឧបករណ៍មាត្រាសាស្ត្រ', data.totals.toolsCount, 'FFDCFCE7');
-                formatKpiCard(wsDash, 'D', 'ទំនិញវេចខ្ចប់', data.totals.packageCount, 'FFF3E8FF');
-                formatKpiCard(wsDash, 'E', 'ចំនួនក្រុមហ៊ុនសរុប', data.totals.companyCount, 'FFECFEFF');
-                formatKpiCard(wsDash, 'F', 'ក្រុមហ៊ុនបានអនុម័ត', data.totals.approvedCompanyCount, 'FFE0F2FE');
-                formatKpiCard(wsDash, 'G', 'កំពុងរង់ចាំការអនុម័ត', data.totals.pendingCount, 'FFFFF7ED');
-
-                wsDash.getCell('B7').value = 'សេចក្តីវិភាគ និងសង្ខេបលទ្ធផល៖';
-                wsDash.getCell('B7').font = { name: fontName, size: 10, bold: true };
-                wsDash.getCell('B8').value = generateNarrative(data);
-                wsDash.getCell('B8').font = { name: fontName, size: 10, italic: true };
-                wsDash.getCell('B8').alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
-                wsDash.mergeCells('B8:G10');
-
-                wsDash.getCell('B12').value = 'តារាងសង្ខេបចំនួនក្រុមហ៊ុនតាមរាជធានី/ខេត្ត៖';
-                wsDash.getCell('B12').font = { name: fontName, size: 10, bold: true };
-                
-                const provHeader = ['ល.រ', 'រាជធានី/ខេត្ត', 'ចំនួនក្រុមហ៊ុន/សហគ្រាស', 'ការចុះបញ្ជីថ្មី', 'ការចុះបញ្ជីបន្ត', 'សមាមាត្រ (%)'];
-                const headerRow = wsDash.getRow(13);
-                provHeader.forEach((h, i) => {
-                    headerRow.getCell(i + 2).value = h;
+                const NAVY = 'FF0F2147', SOFT = 'FFF1F5F9', ACCENT = 'FF1D4ED8';
+                const wsDash = workbook.addWorksheet('សង្ខេបថ្នាក់ដឹកនាំ', {
+                    pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+                                 margins: { left: 0.5, right: 0.5, top: 0.6, bottom: 0.5, header: 0.3, footer: 0.3 } }
                 });
+                wsDash.views = [{ showGridLines: false }];
+                wsDash.columns = [{ width: 3 }, { width: 34 }, { width: 15 }, { width: 13 }, { width: 20 }, { width: 15 }, { width: 13 }, { width: 16 }, { width: 14 }, { width: 14 }];
 
-                let rIndex = 14;
-                data.provinces.forEach((p, idx) => {
-                    const r = wsDash.getRow(rIndex);
-                    r.getCell(2).value = idx + 1;
-                    r.getCell(3).value = p.province;
-                    r.getCell(4).value = p.total;
-                    r.getCell(5).value = p.newCount;
-                    r.getCell(6).value = p.renewalCount;
-                    r.getCell(7).value = p.total / data.totals.companyCount;
-                    rIndex++;
-                });
+                const dashTitle = (cell, text, size, color, bold = true) => {
+                    wsDash.getCell(cell).value = text;
+                    wsDash.getCell(cell).font = { name: fontName, size, bold, color: { argb: color } };
+                };
+                dashTitle('B2', 'របាយការណ៍ស្តីពី ស្ថានភាព និងលទ្ធផលនៃការចុះបញ្ជីមាត្រាសាស្ត្រ', 16, NAVY);
+                wsDash.mergeCells('B2:J2');
+                dashTitle('B3', `${A.meta.department} — ${A.meta.institution}`, 11, 'FF1E3A8A');
+                wsDash.mergeCells('B3:J3');
+                wsDash.getCell('B4').value = A.meta.filterText
+                    ? `រយៈពេលទិន្នន័យ៖ ${A.meta.startDate || '-'} ដល់ ${A.meta.endDate || '-'}   |   លក្ខខណ្ឌស្វែងរក៖ ${A.meta.filterText}   |   បង្កើតថ្ងៃ៖ ${A.meta.generatedAt}`
+                    : `រយៈពេលទិន្នន័យ៖ ${A.meta.startDate || '-'} ដល់ ${A.meta.endDate || '-'}   |   វិសាលភាព៖ ទិន្នន័យទាំងអស់   |   បង្កើតថ្ងៃ៖ ${A.meta.generatedAt}`;
+                wsDash.getCell('B4').font = { name: fontName, size: 9.5, italic: true, color: { argb: 'FF475569' } };
+                wsDash.mergeCells('B4:J4');
 
-                wsDash.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-                    if (rowNumber < 13 || rowNumber >= rIndex) return;
-                    row.height = 20;
-                    for (let c = 2; c <= 7; c++) {
-                        const cell = row.getCell(c);
-                        cell.font = { name: fontName, size: 9 };
-                        cell.border = thinBorder;
-                        if (rowNumber === 13) {
-                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
-                            cell.font = { name: fontName, size: 9, bold: true, color: { argb: 'FFFFFFFF' } };
-                            cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                        } else {
-                            if (rowNumber % 2 === 0) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
-                            if (c === 7) cell.numFmt = '0.0%';
+                // KPI block — label / value / share, three per band
+                const KPI_ITEMS = [
+                    ['ក្រុមហ៊ុនដាក់ស្នើ', appX.total, ''],
+                    ['បានអនុម័ត', appX.completed, `${appX.approvalRate}%`],
+                    ['កំពុងដំណើរការ', appX.pending, `${appX.pendingRate}%`],
+                    ['ឧបករណ៍/ទំនិញសរុប', itX.total, ''],
+                    ['ឧបករណ៍មាត្រាសាស្ត្រ', itX.instruments, `${itX.instrumentShare}%`],
+                    ['ទំនិញវេចខ្ចប់', itX.packagedGoods, `${itX.packagedGoodsShare}%`],
+                    ['ចុះបញ្ជីថ្មី', appX.newRegistration, `${pct(appX.newRegistration, appX.total)}%`],
+                    ['ចុះបញ្ជីបន្ត', appX.renewal, `${pct(appX.renewal, appX.total)}%`],
+                    [`ឯកសារយឺតលើស ${ppX.standardDays} ថ្ងៃ`, ppX.delayed, ppX.measurableApplications ? `${pct(ppX.delayed, ppX.measurableApplications)}%` : '']
+                ];
+                const kpiRow = 6;
+                KPI_ITEMS.forEach((item, i) => {
+                    const col = 2 + (i % 3) * 3;              // B, E, H
+                    const row = kpiRow + Math.floor(i / 3) * 3;
+                    const label = wsDash.getRow(row).getCell(col);
+                    label.value = item[0];
+                    label.font = { name: fontName, size: 9.5, bold: true, color: { argb: 'FF334155' } };
+                    label.alignment = { vertical: 'middle', wrapText: true };
+                    const val = wsDash.getRow(row + 1).getCell(col);
+                    val.value = item[1];
+                    val.numFmt = '#,##0';
+                    val.font = { name: fontName, size: 20, bold: true, color: { argb: NAVY } };
+                    val.alignment = { vertical: 'middle' };
+                    if (item[2]) {
+                        const share = wsDash.getRow(row + 1).getCell(col + 1);
+                        share.value = item[2];
+                        share.font = { name: fontName, size: 10, bold: true, color: { argb: ACCENT } };
+                        share.alignment = { vertical: 'bottom', horizontal: 'left' };
+                    }
+                    for (let c = col; c <= col + 1; c++) {
+                        for (let r = row; r <= row + 1; r++) {
+                            const cell = wsDash.getRow(r).getCell(c);
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: SOFT } };
+                            cell.border = thinBorder;
                         }
                     }
+                    wsDash.getRow(row).height = 18;
+                    wsDash.getRow(row + 1).height = 26;
                 });
 
-                // --- Editable Chart Data Tables (replacing static images) ---
-                // Monthly Registration Data Table
-                const monthlyStartRow = rIndex + 2;
-                wsDash.getCell(`B${monthlyStartRow}`).value = 'តារាងទិន្នន័យចំនួនក្រុមហ៊ុនចុះបញ្ជីប្រចាំខែ (សម្រាប់បង្កើតក្រាហ្វិក)៖';
-                wsDash.getCell(`B${monthlyStartRow}`).font = { name: fontName, size: 10, bold: true, color: { argb: 'FF1E3A8A' } };
-                const mhRow = wsDash.getRow(monthlyStartRow + 1);
-                mhRow.getCell(2).value = 'ខែ';
-                mhRow.getCell(3).value = 'ចំនួនក្រុមហ៊ុន/សហគ្រាស';
-                mhRow.height = 20;
-                for (let mc = 2; mc <= 3; mc++) {
-                    mhRow.getCell(mc).font = { name: fontName, size: 9, bold: true, color: { argb: 'FFFFFFFF' } };
-                    mhRow.getCell(mc).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
-                    mhRow.getCell(mc).border = thinBorder;
-                    mhRow.getCell(mc).alignment = { vertical: 'middle', horizontal: 'center' };
-                }
-                const monthNamesForExcel = ['មករា','កុម្ភៈ','មីនា','មេសា','ឧសភា','មិថុនា','កក្កដា','សីហា','កញ្ញា','តុលា','វិច្ឆិកា','ធ្នូ'];
-                if (data.monthly && data.monthly.labels) {
-                    data.monthly.labels.forEach((label, mi) => {
-                        const mr = wsDash.getRow(monthlyStartRow + 2 + mi);
-                        mr.getCell(2).value = label;
-                        mr.getCell(3).value = data.monthly.data[mi] || 0;
-                        mr.height = 18;
-                        for (let mc = 2; mc <= 3; mc++) {
-                            mr.getCell(mc).font = { name: fontName, size: 9 };
-                            mr.getCell(mc).border = thinBorder;
-                            if ((mi + 1) % 2 === 0) mr.getCell(mc).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
-                        }
-                    });
-                }
-
-                // Status Breakdown Data Table
-                const statusStartRow = monthlyStartRow + (data.monthly && data.monthly.labels ? data.monthly.labels.length : 0) + 4;
-                wsDash.getCell(`B${statusStartRow}`).value = 'តារាងទិន្នន័យស្ថានភាពសំណុំឯកសារ (សម្រាប់បង្កើតក្រាហ្វិក)៖';
-                wsDash.getCell(`B${statusStartRow}`).font = { name: fontName, size: 10, bold: true, color: { argb: 'FF1E3A8A' } };
-                const shRow = wsDash.getRow(statusStartRow + 1);
-                shRow.getCell(2).value = 'ស្ថានភាព';
-                shRow.getCell(3).value = 'ចំនួន';
-                shRow.getCell(4).value = 'សមាមាត្រ (%)';
-                shRow.height = 20;
-                for (let sc = 2; sc <= 4; sc++) {
-                    shRow.getCell(sc).font = { name: fontName, size: 9, bold: true, color: { argb: 'FFFFFFFF' } };
-                    shRow.getCell(sc).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
-                    shRow.getCell(sc).border = thinBorder;
-                    shRow.getCell(sc).alignment = { vertical: 'middle', horizontal: 'center' };
-                }
-                if (data.statusBreakdown) {
-                    const statusEntries = Object.entries(data.statusBreakdown);
-                    const statusSum = statusEntries.reduce((s, e) => s + e[1], 0);
-                    statusEntries.forEach(([status, count], si) => {
-                        const sr = wsDash.getRow(statusStartRow + 2 + si);
-                        sr.getCell(2).value = status;
-                        sr.getCell(3).value = count;
-                        sr.getCell(4).value = statusSum > 0 ? count / statusSum : 0;
-                        sr.height = 18;
-                        for (let sc = 2; sc <= 4; sc++) {
-                            sr.getCell(sc).font = { name: fontName, size: 9 };
-                            sr.getCell(sc).border = thinBorder;
-                            if ((si + 1) % 2 === 0) sr.getCell(sc).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
-                            if (sc === 4) sr.getCell(sc).numFmt = '0.0%';
-                        }
-                    });
-                }
-
-                // Sheet 2: តាមរាជធានីខេត្ត
-                const wsProv = workbook.addWorksheet('តាមរាជធានីខេត្ត');
-                wsProv.views = [{ showGridLines: true }];
-                wsProv.addRow(['ល.រ', 'រាជធានី/ខេត្ត', 'ចំនួនក្រុមហ៊ុន/សហគ្រាស', 'ការចុះបញ្ជីថ្មី', 'ការចុះបញ្ជីបន្ត', 'សមាមាត្រ (%)']);
-                data.provinces.forEach((p, idx) => {
-                    wsProv.addRow([
-                        idx + 1,
-                        p.province,
-                        p.total,
-                        p.newCount,
-                        p.renewalCount,
-                        p.total / data.totals.companyCount
-                    ]);
+                // Executive narrative
+                let dRow = kpiRow + 9;
+                wsDash.getCell(`B${dRow}`).value = 'សេចក្តីសង្ខេបលទ្ធផល';
+                wsDash.getCell(`B${dRow}`).font = { name: fontName, size: 11, bold: true, color: { argb: NAVY } };
+                dRow++;
+                A.managementAnalysis.executiveSummary.forEach(p => {
+                    const c = wsDash.getCell(`B${dRow}`);
+                    c.value = p;
+                    c.font = { name: fontName, size: 9.5 };
+                    c.alignment = { vertical: 'top', wrapText: true };
+                    wsDash.mergeCells(`B${dRow}:J${dRow + 1}`);
+                    wsDash.getRow(dRow).height = 26;
+                    wsDash.getRow(dRow + 1).height = 26;
+                    dRow += 2;
                 });
-                formatTable(wsProv, 1, 6);
-                wsProv.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-                    if (rowNumber > 1) {
-                        row.getCell(6).numFmt = '0.0%';
+
+                // Key findings and recommendations, side by side
+                dRow += 1;
+                wsDash.getCell(`B${dRow}`).value = 'ចំណុចគួរយកចិត្តទុកដាក់';
+                wsDash.getCell(`B${dRow}`).font = { name: fontName, size: 11, bold: true, color: { argb: NAVY } };
+                wsDash.getCell(`F${dRow}`).value = 'សំណើ និងទិសដៅអនុវត្តបន្ត';
+                wsDash.getCell(`F${dRow}`).font = { name: fontName, size: 11, bold: true, color: { argb: NAVY } };
+                const findingsStart = dRow + 1;
+                const maxLines = Math.max(A.managementAnalysis.keyFindings.length, A.managementAnalysis.recommendations.length);
+                for (let i = 0; i < maxLines; i++) {
+                    const r = findingsStart + i * 2;
+                    if (A.managementAnalysis.keyFindings[i]) {
+                        const c = wsDash.getCell(`B${r}`);
+                        c.value = `• ${A.managementAnalysis.keyFindings[i]}`;
+                        c.font = { name: fontName, size: 9 };
+                        c.alignment = { vertical: 'top', wrapText: true };
+                        wsDash.mergeCells(`B${r}:E${r + 1}`);
                     }
+                    if (A.managementAnalysis.recommendations[i]) {
+                        const c = wsDash.getCell(`F${r}`);
+                        c.value = `${i + 1}. ${A.managementAnalysis.recommendations[i]}`;
+                        c.font = { name: fontName, size: 9 };
+                        c.alignment = { vertical: 'top', wrapText: true };
+                        wsDash.mergeCells(`F${r}:J${r + 1}`);
+                    }
+                    wsDash.getRow(r).height = 22;
+                    wsDash.getRow(r + 1).height = 22;
+                }
+                dRow = findingsStart + maxLines * 2 + 1;
+
+                /* Charts — rendered with Chart.js and embedded as images.
+                   ExcelJS cannot author native Excel charts, so images are used
+                   rather than faking a chart the format does not support. */
+                const dashCharts = [
+                    ['status', 'ការចែកចាយស្ថានភាពសំណើ'],
+                    ['registrationType', 'ការចុះបញ្ជីថ្មី និងបន្ត'],
+                    ['itemMix', 'ឧបករណ៍ធៀបនឹងទំនិញវេចខ្ចប់'],
+                    ['province', 'សំណើតាមរាជធានី/ខេត្ត'],
+                    ['intake', A.intakeAnalysis.title],
+                    ['delay', 'ការចែកចាយរយៈពេលយឺត']
+                ].filter(entry => reportChartsX[entry[0]]);
+
+                dashCharts.forEach((entry, i) => {
+                    const key = entry[0], title = entry[1];
+                    const col = (i % 2) === 0 ? 1 : 5;                 // columns B.. and F..
+                    const rowTop = dRow + Math.floor(i / 2) * 17;
+                    const titleCell = wsDash.getRow(rowTop).getCell(col + 1);
+                    titleCell.value = title;
+                    titleCell.font = { name: fontName, size: 10, bold: true, color: { argb: NAVY } };
+                    try {
+                        const imgId = workbook.addImage({ base64: reportChartsX[key], extension: 'png' });
+                        wsDash.addImage(imgId, {
+                            tl: { col: col, row: rowTop },
+                            ext: { width: 430, height: 215 }
+                        });
+                    } catch (e) { console.warn('Excel chart embed failed:', e); }
                 });
-                autofitWidths(wsProv, 6);
+                if (dashCharts.length) {
+                    const chartRows = Math.ceil(dashCharts.length / 2) * 17;
+                    for (let r = dRow; r < dRow + chartRows; r++) wsDash.getRow(r).height = 14;
+                    dRow += chartRows + 1;
+                }
 
-                // Note: Province data table above is already formatted for chart creation
-                // Users can select data range → Insert → Chart in Excel
+                wsDash.getCell(`B${dRow}`).value = `ចំណាំ៖ ការវិភាគរយៈពេលផ្អែកលើសំណើចំនួន ${ppX.measurableApplications} ដែលមានទិន្នន័យគ្រប់គ្រាន់ ក្នុងចំណោមសំណើសរុប ${appX.total}។`;
+                wsDash.getCell(`B${dRow}`).font = { name: fontName, size: 9, italic: true, color: { argb: 'FF475569' } };
+                wsDash.mergeCells(`B${dRow}:J${dRow}`);
+                wsDash.pageSetup.printArea = `A1:J${dRow}`;
 
-                // Sheet 3: បញ្ជីក្រុមហ៊ុន
-                const wsComp = workbook.addWorksheet('បញ្ជីក្រុមហ៊ុន');
+                // Sheet 2: ការវិភាគសំណើ — one row per application (application grain)
+                const wsComp = workbook.addWorksheet('ការវិភាគសំណើ');
                 wsComp.views = [{ showGridLines: true }];
                 wsComp.addRow([
                     'ល.រ', 'លេខចុះបញ្ជី', 'ឈ្មោះក្រុមហ៊ុន/សហគ្រាស', 'រាជធានី/ខេត្ត', 'ថ្ងៃចុះបញ្ជី', 
@@ -2571,6 +2740,35 @@
                 });
                 formatTable(wsComp, 1, 13);
                 autofitWidths(wsComp, 13);
+
+                // Sheet 3: តាមរាជធានីខេត្ត — both grains kept in separate columns
+                const wsProv = workbook.addWorksheet('តាមរាជធានីខេត្ត');
+                wsProv.addRow(['ល.រ', 'រាជធានី/ខេត្ត', 'ក្រុមហ៊ុនសរុប', 'បានអនុម័ត', 'កំពុងដំណើរការ', 'ចុះបញ្ជីថ្មី', 'បន្ត', 'ឧបករណ៍', 'ទំនិញវេចខ្ចប់', 'ធាតុសរុប', 'ភាគរយ']);
+                A.provinceAnalysis.forEach((p, idx) => {
+                    wsProv.addRow([idx + 1, p.province, p.applications, p.completed, p.pending, p.newCount, p.renewalCount, p.instruments, p.packagedGoods, p.items, p.percent / 100]);
+                });
+                // Total row so the sheet reconciles against the executive dashboard.
+                const provTotalRow = wsProv.addRow([
+                    '', 'សរុប',
+                    A.provinceAnalysis.reduce((s, p) => s + p.applications, 0),
+                    A.provinceAnalysis.reduce((s, p) => s + p.completed, 0),
+                    A.provinceAnalysis.reduce((s, p) => s + p.pending, 0),
+                    A.provinceAnalysis.reduce((s, p) => s + p.newCount, 0),
+                    A.provinceAnalysis.reduce((s, p) => s + p.renewalCount, 0),
+                    A.provinceAnalysis.reduce((s, p) => s + p.instruments, 0),
+                    A.provinceAnalysis.reduce((s, p) => s + p.packagedGoods, 0),
+                    A.provinceAnalysis.reduce((s, p) => s + p.items, 0),
+                    1
+                ]);
+                formatTable(wsProv, 1, 11);
+                wsProv.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+                    if (rowNumber > 1) row.getCell(11).numFmt = '0.0%';
+                });
+                provTotalRow.eachCell({ includeEmpty: true }, cell => {
+                    cell.font = { name: fontName, size: 10, bold: true };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+                });
+                autofitWidths(wsProv, 11);
 
                 // Sheet 4: សង្ខេបឧបករណ៍
                 const wsTools = workbook.addWorksheet('សង្ខេបឧបករណ៍');
@@ -2624,27 +2822,86 @@
                 formatTable(wsPkgs, 1, 7);
                 autofitWidths(wsPkgs, 7);
 
+                /* Sheet: ឧបករណ៍និងទំនិញ — combined item portfolio (item grain).
+                   Names are shown exactly as they appear in the source; no
+                   taxonomy is invented where the data does not provide one. */
+                const wsPortfolio = workbook.addWorksheet('ឧបករណ៍និងទំនិញ');
+                wsPortfolio.addRow(['ល.រ', 'ឈ្មោះឧបករណ៍/ទំនិញ', 'ប្រភេទ', 'ចំនួនធាតុ', 'ចំនួនក្រុមហ៊ុន', 'ភាគរយនៃធាតុសរុប']);
+                A.itemPortfolio.forEach((x, i) => wsPortfolio.addRow([i + 1, x.name, x.kind, x.count, x.companies, x.percent / 100]));
+                const portfolioTotal = wsPortfolio.addRow(['', 'សរុប', '', itX.total, '', 1]);
+                formatTable(wsPortfolio, 1, 6);
+                wsPortfolio.eachRow({ includeEmpty: false }, (row, rn) => { if (rn > 1) row.getCell(6).numFmt = '0.0%'; });
+                portfolioTotal.eachCell({ includeEmpty: true }, c => {
+                    c.font = { name: fontName, size: 10, bold: true };
+                    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+                });
+                autofitWidths(wsPortfolio, 6);
+
+                /* Sheet: ការវិភាគរយៈពេល — processing performance, denominator stated. */
+                const wsPerf = workbook.addWorksheet('ការវិភាគរយៈពេល');
+                wsPerf.addRow(['សូចនាករ', 'លទ្ធផល']);
+                [
+                    ['សំណើសរុប', appX.total],
+                    ['សំណើដែលអាចគណនារយៈពេលបាន', ppX.measurableApplications],
+                    ['សំណើដែលមិនអាចគណនារយៈពេលបាន', A.dataQuality.invalidProcessingDates],
+                    [`រយៈពេលស្តង់ដារ (ថ្ងៃ)`, ppX.standardDays],
+                    [`ក្នុងស្តង់ដារ ${ppX.standardDays} ថ្ងៃ`, ppX.withinStandard],
+                    [`លើសស្តង់ដារ ${ppX.standardDays} ថ្ងៃ`, ppX.delayed],
+                    ['យឺតខ្ពស់បំផុត (ថ្ងៃ)', ppX.highestDelay],
+                    ['ក្រុមហ៊ុនដែលយឺតខ្ពស់បំផុត', cleanText(ppX.highestDelayCompany, '-')],
+                    ['មធ្យមភាគនៃការយឺត (ថ្ងៃ)', ppX.averageDelay],
+                    ['មធ្យមកណ្ដាល Median (ថ្ងៃ)', ppX.medianDelay],
+                    ['ថ្ងៃកំណត់របាយការណ៍ (As-of)', ppX.asOfDate]
+                ].forEach(r => wsPerf.addRow(r));
+                formatTable(wsPerf, 1, 2);
+                wsPerf.addRow([]);
+                const bandHeaderRow = wsPerf.rowCount + 1;
+                wsPerf.addRow(['ចន្លោះរយៈពេលយឺត', 'ចំនួនសំណើ']);
+                ppX.bands.forEach(b => wsPerf.addRow([b.label, b.count]));
+                for (let r = bandHeaderRow; r <= wsPerf.rowCount; r++) {
+                    const row = wsPerf.getRow(r);
+                    row.height = 20;
+                    for (let c = 1; c <= 2; c++) {
+                        const cell = row.getCell(c);
+                        cell.border = thinBorder;
+                        cell.font = { name: fontName, size: 10, bold: r === bandHeaderRow, color: { argb: r === bandHeaderRow ? 'FFFFFFFF' : 'FF000000' } };
+                        if (r === bandHeaderRow) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+                    }
+                }
+                const perfNoteRow = wsPerf.addRow([`ចំណាំ៖ ស្ថិតិខាងលើផ្អែកលើសំណើចំនួន ${ppX.measurableApplications} ក្នុងចំណោមសំណើសរុប ${appX.total}។`]);
+                perfNoteRow.getCell(1).font = { name: fontName, size: 9, italic: true, color: { argb: 'FF475569' } };
+                autofitWidths(wsPerf, 2);
+
                 // Sheet 6: ឯកសារយឺត
                 const wsDelay = workbook.addWorksheet('ឯកសារយឺត');
                 wsDelay.views = [{ showGridLines: true }];
                 wsDelay.addRow(['ល.រ', 'ឈ្មោះក្រុមហ៊ុន/សហគ្រាស', 'រាជធានី/ខេត្ត', 'ប្រភេទសំណើ', 'ថ្ងៃចាប់ផ្ដើម', 'ថ្ងៃបញ្ចប់/ថ្ងៃកំណត់', 'ថ្ងៃដំណើរការ', 'ស្តង់ដារ', 'យឺតចំនួនថ្ងៃ', 'ស្ថានភាព']);
 
                 // Same records the dashboard table renders — no recalculation.
+                // Numeric day counts stay numeric so Excel can sort and total them.
                 data.delayedDocuments.forEach((d, idx) => {
                     wsDelay.addRow([
                         idx + 1,
-                        d.company,
+                        cleanText(d.company, 'មិនបានបញ្ជាក់'),
                         d.province,
                         d.applicationType,
                         d.startDate,
                         d.endDate,
-                        `${d.processingDays} ថ្ងៃ`,
-                        `${d.allowedDays} ថ្ងៃ`,
-                        `${d.delayDays} ថ្ងៃ`,
+                        d.processingDays,
+                        d.allowedDays,
+                        d.delayDays,
                         d.status
                     ]);
                 });
                 formatTable(wsDelay, 1, 10);
+                // Severity banding — light institutional fills, not alarm colours.
+                const bandFill = days => days <= 7 ? 'FFFEF9C3' : days <= 15 ? 'FFFEF3C7' : days <= 30 ? 'FFFFEDD5' : days <= 60 ? 'FFFFE4E6' : 'FFFECDD3';
+                data.delayedDocuments.forEach((d, idx) => {
+                    const row = wsDelay.getRow(idx + 2);
+                    const fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bandFill(d.delayDays) } };
+                    for (let c = 1; c <= 10; c++) row.getCell(c).fill = fill;
+                    row.getCell(9).font = { name: fontName, size: 10, bold: true, color: { argb: 'FF9F1239' } };
+                });
                 autofitWidths(wsDelay, 10);
 
                 // Sheet 6b: records excluded from delay statistics, with the reason.
@@ -2658,6 +2915,43 @@
                     formatTable(wsInvalid, 1, 6);
                     autofitWidths(wsInvalid, 6);
                 }
+
+                /* Sheet: គុណភាពទិន្នន័យ — summary counts plus the affected rows,
+                   so limitations are visible rather than silently absorbed. */
+                const wsQuality = workbook.addWorksheet('គុណភាពទិន្នន័យ');
+                const qX = A.dataQuality;
+                wsQuality.addRow(['ប្រភេទបញ្ហា', 'ចំនួន', 'មូលដ្ឋានគិត']);
+                [
+                    ['សំណើគ្មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់គណនារយៈពេល', qX.invalidProcessingDates, `សំណើសរុប ${appX.total}`],
+                    ['សំណើគ្មានឈ្មោះក្រុមហ៊ុន/សហគ្រាស', qX.missingCompanyName, `សំណើសរុប ${appX.total}`],
+                    ['ជួរធាតុគ្មានឈ្មោះឧបករណ៍/ទំនិញ', qX.missingItemName, `ជួរធាតុសរុប ${qX.totalItemRows}`],
+                    ['ជួរធាតុមាន «ប្រទេសផលិតដើម» ជាលេខ', qX.numericOriginCountry, `ជួរធាតុសរុប ${qX.totalItemRows}`],
+                    ['ជួរធាតុមាន «ឆ្នាំផលិត» មិនត្រឹមត្រូវ', qX.invalidManufactureYear, `ជួរធាតុសរុប ${qX.totalItemRows}`],
+                    ['ជួរធាតុគ្មាន «កម្រិតលម្អៀង/សុក្រឹតភាព»', qX.missingAccuracyClass, `ជួរធាតុសរុប ${qX.totalItemRows}`]
+                ].forEach(r => wsQuality.addRow(r));
+                formatTable(wsQuality, 1, 3);
+
+                wsQuality.addRow([]);
+                const ccStart = wsQuality.rowCount + 1;
+                wsQuality.addRow(['ការត្រួតពិនិត្យផ្ទៃក្នុង', 'តម្លៃរំពឹងទុក', 'តម្លៃពិត', 'លទ្ធផល']);
+                A.crossChecks.forEach(c => wsQuality.addRow([c.name, c.expected, c.actual, c.pass ? 'ត្រឹមត្រូវ' : 'មិនស៊ីគ្នា']));
+                for (let r = ccStart; r <= wsQuality.rowCount; r++) {
+                    const row = wsQuality.getRow(r);
+                    row.height = 20;
+                    for (let c = 1; c <= 4; c++) {
+                        const cell = row.getCell(c);
+                        cell.border = thinBorder;
+                        cell.font = { name: fontName, size: 10, bold: r === ccStart, color: { argb: r === ccStart ? 'FFFFFFFF' : 'FF000000' } };
+                        if (r === ccStart) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBg } };
+                        else if (c === 4) cell.font = { name: fontName, size: 10, bold: true, color: { argb: String(row.getCell(4).value) === 'ត្រឹមត្រូវ' ? 'FF047857' : 'FFBE123C' } };
+                    }
+                }
+                wsQuality.addRow([]);
+                A.managementAnalysis.dataQualityNotes.forEach(n => {
+                    const r = wsQuality.addRow([n]);
+                    r.getCell(1).font = { name: fontName, size: 9, italic: true, color: { argb: 'FF475569' } };
+                });
+                autofitWidths(wsQuality, 4);
 
                 // Sheet 7: ទិន្នន័យដើម
                 const wsRaw = workbook.addWorksheet('ទិន្នន័យដើម');
