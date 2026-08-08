@@ -66,6 +66,15 @@
         #sidebar.sidebar-collapsed #toggleIcon {
             transform: rotate(180deg);
         }
+        /* Sticky headers in dashboard tables */
+        table th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        /* Hide scrollbar utility */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         /* Glassmorphism card enhancements */
         .glass-card {
             background: rgba(255,255,255,0.85);
@@ -212,181 +221,188 @@
         <!-- Right Hand Workspace Pane -->
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
             
-            <!-- MAIN HERO HEADER: Metrology Science & Government Authority -->
-            <header class="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 text-slate-100 border-b border-slate-800 shadow-xl relative overflow-hidden flex-shrink-0 z-10 bg-grid-pattern">
-                
-                <!-- Background Subtle Scientific Geometry & Calibration Lines -->
-                <div class="absolute inset-0 pointer-events-none opacity-20">
-                    <!-- Vernier calibration ticks at top border -->
-                    <svg class="w-full h-3 text-blue-400" fill="none" stroke="currentColor">
-                        <pattern id="vernierScale" width="40" height="12" patternUnits="userSpaceOnUse">
-                            <line x1="0" y1="0" x2="0" y2="10" stroke-width="1.5"/>
-                            <line x1="4" y1="0" x2="4" y2="4" stroke-width="1"/>
-                            <line x1="8" y1="0" x2="8" y2="4" stroke-width="1"/>
-                            <line x1="12" y1="0" x2="12" y2="4" stroke-width="1"/>
-                            <line x1="16" y1="0" x2="16" y2="4" stroke-width="1"/>
-                            <line x1="20" y1="0" x2="20" y2="7" stroke-width="1.2"/>
-                            <line x1="24" y1="0" x2="24" y2="4" stroke-width="1"/>
-                            <line x1="28" y1="0" x2="28" y2="4" stroke-width="1"/>
-                            <line x1="32" y1="0" x2="32" y2="4" stroke-width="1"/>
-                            <line x1="36" y1="0" x2="36" y2="4" stroke-width="1"/>
-                        </pattern>
-                        <rect width="100%" height="12" fill="url(#vernierScale)" />
-                    </svg>
-                    
-                    <!-- Frequency Waveform & Connection Paths -->
-                    <svg class="absolute right-1/4 top-1/2 -translate-y-1/2 w-96 h-32 text-blue-500/30" viewBox="0 0 400 120" fill="none" stroke="currentColor">
-                        <path d="M 0 60 Q 25 10 50 60 T 100 60 T 150 60 T 200 60 T 250 60 T 300 60 T 350 60 T 400 60" stroke-width="1.5" stroke-dasharray="4 2"/>
-                        <circle cx="200" cy="60" r="40" stroke-width="1"/>
-                        <circle cx="200" cy="60" r="55" stroke-width="0.8" stroke-dasharray="2 4"/>
-                    </svg>
-                </div>
+            <!-- ═══════════════════════════════════════════════════════════════════ -->
+            <!-- MAIN HEADER: Government Authority & National Metrology Center     -->
+            <!-- Design: Formal Cambodian government style with metrology identity  -->
+            <!-- ═══════════════════════════════════════════════════════════════════ -->
+            <header class="flex-shrink-0 z-10 relative">
 
-                <!-- Main Header Content Container -->
-                <div class="max-w-[1700px] mx-auto px-4 sm:px-6 py-3.5 relative">
-                    
-                    <!-- Top Row: Branding (Left) | SI Science Diagram (Center) | System Controls (Right) -->
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-                        
-                        <!-- AREA A: Institutional Branding (Left) -->
-                        <div class="lg:col-span-5 xl:col-span-4 flex items-center gap-3.5">
-                            <button id="menuBtn" class="p-2 text-slate-300 hover:bg-slate-800 rounded-lg md:hidden transition flex-shrink-0">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                                </svg>
-                            </button>
-
-                            <!-- Official NMC Logo -->
-                            <div class="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-white p-0.5 shadow-lg shadow-blue-500/20 ring-2 ring-blue-400/40 flex items-center justify-center flex-shrink-0">
-                                <img src="NMClogo.jpg" alt="National Metrology Center Logo" class="h-full w-full object-contain rounded-full">
-                            </div>
-
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
-                                    <p class="text-[9.5px] sm:text-[10px] font-bold text-blue-300 uppercase tracking-wider truncate">
-                                        ក្រសួងឧស្សាហកម្ម វិទ្យាសាស្ត្រ បច្ចេកវិទ្យា និងនវានុវត្តន៍
-                                    </p>
-                                </div>
-                                <h1 class="font-moul text-sm sm:text-base text-white tracking-wide leading-snug mt-0.5 truncate">
-                                    មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ
-                                </h1>
-                                <div class="flex items-center gap-2 mt-0.5 text-[10px] text-slate-300">
-                                    <span class="font-semibold text-blue-200 truncate">National Metrology Center of Cambodia</span>
-                                    <span class="text-slate-600">&bull;</span>
-                                    <span class="text-slate-400 truncate">នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- AREA B: SI Base Units & Measurement Science Diagram (Center) -->
-                        <div class="hidden lg:flex lg:col-span-4 xl:col-span-5 flex-col items-center justify-center border-x border-slate-800/80 px-4 py-1">
-                            
-                            <!-- Header Title for SI Section -->
-                            <div class="flex items-center gap-2 text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-1.5">
-                                <span>SI</span>
-                                <span class="text-slate-600">•</span>
-                                <span>International System of Units</span>
-                                <span class="text-slate-600">•</span>
-                                <span>Traceability</span>
-                            </div>
-
-                            <!-- 7 SI Base Units Interactive Nodes Ribbon -->
-                            <div class="flex items-center justify-center gap-1.5 flex-wrap">
-                                
-                                <!-- 1. s (second) -->
-                                <div class="si-node flex items-center gap-1 bg-slate-900/90 border border-blue-500/30 px-2 py-0.5 rounded-md text-[10px] text-slate-200" title="second (s) — Time / Frequency / Atomic Clock">
-                                    <span class="font-bold text-blue-400">s</span>
-                                    <span class="text-[8.5px] text-slate-400 hidden xl:inline">time</span>
-                                    <svg class="h-3 w-3 text-blue-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                </div>
-
-                                <!-- 2. m (metre) -->
-                                <div class="si-node flex items-center gap-1 bg-slate-900/90 border border-blue-500/30 px-2 py-0.5 rounded-md text-[10px] text-slate-200" title="metre (m) — Length / Dimensional Metrology">
-                                    <span class="font-bold text-emerald-400">m</span>
-                                    <span class="text-[8.5px] text-slate-400 hidden xl:inline">length</span>
-                                    <svg class="h-3 w-3 text-emerald-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 01-2-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                                </div>
-
-                                <!-- 3. kg (kilogram) -->
-                                <div class="si-node flex items-center gap-1 bg-slate-900/90 border border-amber-500/40 px-2 py-0.5 rounded-md text-[10px] text-amber-200 ring-1 ring-amber-500/20" title="kilogram (kg) — Mass / Precision Calibration Weight">
-                                    <span class="font-extrabold text-amber-400">kg</span>
-                                    <span class="text-[8.5px] text-amber-300/80 hidden xl:inline">mass</span>
-                                    <svg class="h-3 w-3 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 12h12l3-12H3zm9-3a2 2 0 100 4 2 2 0 000-4z"/></svg>
-                                </div>
-
-                                <!-- Central SI Symbol Badge -->
-                                <div class="px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-extrabold text-xs shadow-md shadow-cyan-500/20 ring-2 ring-white/20">
-                                    SI
-                                </div>
-
-                                <!-- 4. A (ampere) -->
-                                <div class="si-node flex items-center gap-1 bg-slate-900/90 border border-blue-500/30 px-2 py-0.5 rounded-md text-[10px] text-slate-200" title="ampere (A) — Electric Current">
-                                    <span class="font-bold text-cyan-400">A</span>
-                                    <span class="text-[8.5px] text-slate-400 hidden xl:inline">current</span>
-                                    <svg class="h-3 w-3 text-cyan-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                </div>
-
-                                <!-- 5. K (kelvin) -->
-                                <div class="si-node flex items-center gap-1 bg-slate-900/90 border border-blue-500/30 px-2 py-0.5 rounded-md text-[10px] text-slate-200" title="kelvin (K) — Temperature / Thermometry">
-                                    <span class="font-bold text-rose-400">K</span>
-                                    <span class="text-[8.5px] text-slate-400 hidden xl:inline">temp</span>
-                                    <svg class="h-3 w-3 text-rose-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2"/></svg>
-                                </div>
-
-                                <!-- 6. mol (mole) -->
-                                <div class="si-node flex items-center gap-1 bg-slate-900/90 border border-blue-500/30 px-2 py-0.5 rounded-md text-[10px] text-slate-200" title="mole (mol) — Amount of Substance / Chemistry">
-                                    <span class="font-bold text-violet-400">mol</span>
-                                    <span class="text-[8.5px] text-slate-400 hidden xl:inline">amount</span>
-                                    <svg class="h-3 w-3 text-violet-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.6 15.12a2 2 0 00-1.022.547l-1.414 1.414a2 2 0 000 2.828l1.414 1.414a2 2 0 002.828 0l13.43-13.43a2 2 0 000-2.828l-1.414-1.414a2 2 0 00-2.828 0l-1.414 1.414z"/></svg>
-                                </div>
-
-                                <!-- 7. cd (candela) -->
-                                <div class="si-node flex items-center gap-1 bg-slate-900/90 border border-blue-500/30 px-2 py-0.5 rounded-md text-[10px] text-slate-200" title="candela (cd) — Luminous Intensity / Photometry">
-                                    <span class="font-bold text-yellow-400">cd</span>
-                                    <span class="text-[8.5px] text-slate-400 hidden xl:inline">light</span>
-                                    <svg class="h-3 w-3 text-yellow-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                                </div>
-
-                            </div>
-
-                            <!-- Scientific Motto / Subtitle -->
-                            <p class="text-[9px] text-slate-400 font-medium mt-1.5 truncate">
-                                Supporting accurate measurement for industry, trade, calibration &amp; innovation
+                <!-- ─── TOP GOLD MINISTERIAL BANNER ─── -->
+                <div class="bg-gradient-to-r from-amber-800 via-amber-700 to-amber-800 border-b border-amber-600/60 relative overflow-hidden">
+                    <!-- Subtle pattern overlay -->
+                    <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(255,255,255,0.08) 20px, rgba(255,255,255,0.08) 21px);"></div>
+                    <div class="max-w-[1700px] mx-auto px-4 sm:px-6 py-1.5 flex items-center justify-between relative">
+                        <div class="flex items-center gap-2">
+                            <!-- Cambodian Royal Emblem indicator -->
+                            <svg class="h-3.5 w-3.5 text-amber-200/80 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L9 7H3l4.5 5L5 22l7-4 7 4-2.5-10L21 7h-6L12 2z"/></svg>
+                            <p class="text-[9.5px] sm:text-[10.5px] font-bold text-amber-100 tracking-wider truncate">
+                                ព្រះរាជាណាចក្រកម្ពុជា &nbsp;•&nbsp; ក្រសួងឧស្សាហកម្ម វិទ្យាសាស្ត្រ បច្ចេកវិទ្យា និងនវានុវត្តន៍
                             </p>
                         </div>
+                        <div class="hidden sm:flex items-center gap-3 text-[9px] text-amber-200/70 font-medium">
+                            <span>Kingdom of Cambodia</span>
+                            <span class="text-amber-400/40">|</span>
+                            <span>MISTI</span>
+                        </div>
+                    </div>
+                </div>
 
-                        <!-- AREA C: System Controls & Account Metadata (Right) -->
-                        <div class="lg:col-span-3 flex items-center justify-end gap-3">
-                            <!-- Notification Bell Button -->
-                            <button id="notifBtn" type="button" class="relative p-2 text-slate-300 hover:text-white hover:bg-slate-800/80 border border-slate-700/60 rounded-xl transition shadow-sm" title="ការជូនដំណឹង">
-                                <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                                </svg>
-                                <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-400 ring-2 ring-slate-900"></span>
-                            </button>
+                <!-- ─── PRIMARY INSTITUTIONAL HEADER ─── -->
+                <div class="bg-gradient-to-b from-[#0c1a3a] via-[#0f2147] to-[#0c1a3a] text-white border-b border-blue-900/80 shadow-lg relative overflow-hidden">
+                    
+                    <!-- Subtle geometric pattern (precision grid) -->
+                    <div class="absolute inset-0 opacity-[0.04]" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(255,255,255,0.15) 24px, rgba(255,255,255,0.15) 25px), repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(255,255,255,0.15) 24px, rgba(255,255,255,0.15) 25px);"></div>
+                    
+                    <!-- Decorative gold corner accents -->
+                    <div class="absolute top-0 left-0 w-24 h-24 pointer-events-none">
+                        <div class="absolute top-0 left-0 w-12 h-[2px] bg-gradient-to-r from-amber-500/60 to-transparent"></div>
+                        <div class="absolute top-0 left-0 h-12 w-[2px] bg-gradient-to-b from-amber-500/60 to-transparent"></div>
+                    </div>
+                    <div class="absolute top-0 right-0 w-24 h-24 pointer-events-none">
+                        <div class="absolute top-0 right-0 w-12 h-[2px] bg-gradient-to-l from-amber-500/60 to-transparent"></div>
+                        <div class="absolute top-0 right-0 h-12 w-[2px] bg-gradient-to-b from-amber-500/60 to-transparent"></div>
+                    </div>
 
-                            <!-- Language Switcher -->
-                            <div class="flex items-center gap-1.5 border border-slate-700/60 rounded-xl px-2.5 py-1.5 bg-slate-900/80 text-xs font-bold text-slate-200 shadow-sm">
-                                <span>🇰🇭</span>
-                                <span class="text-[11px]">ខ្មែរ</span>
+                    <div class="max-w-[1700px] mx-auto px-4 sm:px-6 py-3 relative">
+                        <div class="flex items-center justify-between gap-4">
+
+                            <!-- LEFT: Logo + Institutional Identity -->
+                            <div class="flex items-center gap-3.5 min-w-0">
+                                <!-- Mobile menu button -->
+                                <button id="menuBtn" class="p-2 text-slate-300 hover:bg-white/10 rounded-lg md:hidden transition flex-shrink-0">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                                    </svg>
+                                </button>
+
+                                <!-- Official NMC Logo with formal gold ring -->
+                                <div class="relative flex-shrink-0">
+                                    <div class="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-white p-[3px] shadow-xl shadow-blue-900/40 ring-[3px] ring-amber-500/50 flex items-center justify-center">
+                                        <img src="NMClogo.jpg" alt="National Metrology Center Logo" class="h-full w-full object-cover rounded-full">
+                                    </div>
+                                    <!-- Status indicator -->
+                                    <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-[#0f2147] shadow-sm"></span>
+                                </div>
+
+                                <!-- Institutional Text Hierarchy -->
+                                <div class="min-w-0">
+                                    <p class="text-[9px] sm:text-[10px] font-semibold text-amber-400/90 uppercase tracking-[0.12em] truncate leading-tight">
+                                        នាយកដ្ឋានមាត្រាសាស្ត្រឧស្សាហកម្ម
+                                    </p>
+                                    <h1 class="font-moul text-base sm:text-lg text-white tracking-wide leading-snug mt-0.5 truncate">
+                                        មជ្ឈមណ្ឌលមាត្រាសាស្ត្រជាតិ
+                                    </h1>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="text-[10px] sm:text-[11px] font-semibold text-blue-200/90 tracking-wide truncate">National Metrology Center of Cambodia</span>
+                                        <span class="hidden sm:inline text-blue-500/40 text-[10px]">—</span>
+                                        <span class="hidden sm:inline text-[9px] text-blue-300/50 font-medium tracking-wider">NMC</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- User Profile Badge -->
-                            <div class="flex items-center gap-2.5 border-l border-slate-800 pl-3">
-                                <div class="h-8.5 w-8.5 rounded-full bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 text-white font-bold text-[10px] flex items-center justify-center shadow-md shadow-blue-500/20 ring-2 ring-blue-500/30">
-                                    ADM
+                            <!-- CENTER: Measurement domains (hidden on small screens) -->
+                            <div class="hidden xl:flex items-center gap-1 px-4 border-x border-blue-800/50">
+                                <div class="flex items-center gap-2 text-[9.5px] text-blue-300/70 font-medium">
+                                    <!-- Mass -->
+                                    <div class="flex items-center gap-1 px-2 py-1 rounded bg-blue-950/60 border border-blue-800/30">
+                                        <svg class="h-3 w-3 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 12h12l3-12H3zm9-3a2 2 0 100 4 2 2 0 000-4z"/></svg>
+                                        <span>ម៉ាស់</span>
+                                    </div>
+                                    <!-- Length -->
+                                    <div class="flex items-center gap-1 px-2 py-1 rounded bg-blue-950/60 border border-blue-800/30">
+                                        <svg class="h-3 w-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                        <span>ប្រវែង</span>
+                                    </div>
+                                    <!-- Temperature -->
+                                    <div class="flex items-center gap-1 px-2 py-1 rounded bg-blue-950/60 border border-blue-800/30">
+                                        <svg class="h-3 w-3 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+                                        <span>សីតុណ្ហភាព</span>
+                                    </div>
+                                    <!-- Electrical -->
+                                    <div class="flex items-center gap-1 px-2 py-1 rounded bg-blue-950/60 border border-blue-800/30">
+                                        <svg class="h-3 w-3 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        <span>អគ្គិសនី</span>
+                                    </div>
                                 </div>
-                                <div class="hidden sm:block text-left">
-                                    <p class="text-[11px] font-bold text-white leading-tight">អ្នកគ្រប់គ្រងប្រព័ន្ធ</p>
-                                    <p class="text-[9px] text-blue-300 font-semibold leading-tight">មន្ត្រីជាន់ខ្ពស់វិភាគ</p>
+                            </div>
+
+                            <!-- RIGHT: Controls & User Profile -->
+                            <div class="flex items-center gap-2.5 flex-shrink-0">
+                                <!-- Notification Bell -->
+                                <button id="notifBtn" type="button" class="relative p-2 text-slate-300 hover:text-white hover:bg-white/10 border border-blue-800/50 rounded-xl transition" title="ការជូនដំណឹង">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                    </svg>
+                                    <span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#0f2147]"></span>
+                                </button>
+
+                                <!-- Language Indicator -->
+                                <div class="flex items-center gap-1.5 border border-blue-800/50 rounded-xl px-2.5 py-1.5 bg-blue-950/50 text-xs font-bold text-slate-200">
+                                    <span>🇰🇭</span>
+                                    <span class="text-[11px]">ខ្មែរ</span>
                                 </div>
+
+                                <!-- User Profile Badge -->
+                                <div class="flex items-center gap-2.5 border-l border-blue-800/50 pl-3">
+                                    <div class="h-9 w-9 rounded-full bg-gradient-to-br from-amber-600 via-amber-500 to-amber-600 text-white font-bold text-[10px] flex items-center justify-center shadow-md ring-2 ring-amber-400/30">
+                                        ADM
+                                    </div>
+                                    <div class="hidden sm:block text-left">
+                                        <p class="text-[11px] font-bold text-white leading-tight">អ្នកគ្រប់គ្រងប្រព័ន្ធ</p>
+                                        <p class="text-[9px] text-amber-300/80 font-semibold leading-tight">មន្ត្រីជាន់ខ្ពស់វិភាគ</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─── BOTTOM SI METROLOGY RIBBON ─── -->
+                <div class="bg-gradient-to-r from-[#091428] via-[#0d1b3d] to-[#091428] border-b-2 border-amber-600/30 relative overflow-hidden">
+                    <!-- Vernier scale pattern at top edge -->
+                    <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-500/40 to-transparent"></div>
+                    
+                    <div class="max-w-[1700px] mx-auto px-4 sm:px-6 py-1.5 flex items-center justify-between">
+                        <!-- SI Units Ribbon -->
+                        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                            <!-- SI Badge -->
+                            <div class="flex-shrink-0 px-2 py-0.5 rounded bg-gradient-to-r from-blue-700 to-blue-600 text-white font-extrabold text-[10px] shadow ring-1 ring-blue-400/30 tracking-wider">
+                                SI
+                            </div>
+                            <span class="text-blue-700/50 text-[10px]">│</span>
+
+                            <!-- 7 SI Base Units as compact pills -->
+                            <div class="si-node flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] bg-blue-950/60 border border-blue-800/30 text-blue-200/80" title="second (s) — Time">
+                                <span class="font-bold text-blue-400">s</span><span class="hidden lg:inline text-blue-400/50">time</span>
+                            </div>
+                            <div class="si-node flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] bg-blue-950/60 border border-blue-800/30 text-blue-200/80" title="metre (m) — Length">
+                                <span class="font-bold text-emerald-400">m</span><span class="hidden lg:inline text-emerald-400/50">length</span>
+                            </div>
+                            <div class="si-node flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] bg-blue-950/60 border border-amber-700/40 text-amber-200/80 ring-1 ring-amber-600/20" title="kilogram (kg) — Mass">
+                                <span class="font-extrabold text-amber-400">kg</span><span class="hidden lg:inline text-amber-400/50">mass</span>
+                            </div>
+                            <div class="si-node flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] bg-blue-950/60 border border-blue-800/30 text-blue-200/80" title="ampere (A) — Current">
+                                <span class="font-bold text-cyan-400">A</span><span class="hidden lg:inline text-cyan-400/50">current</span>
+                            </div>
+                            <div class="si-node flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] bg-blue-950/60 border border-blue-800/30 text-blue-200/80" title="kelvin (K) — Temperature">
+                                <span class="font-bold text-rose-400">K</span><span class="hidden lg:inline text-rose-400/50">temp</span>
+                            </div>
+                            <div class="si-node flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] bg-blue-950/60 border border-blue-800/30 text-blue-200/80" title="mole (mol) — Substance">
+                                <span class="font-bold text-violet-400">mol</span><span class="hidden lg:inline text-violet-400/50">amt</span>
+                            </div>
+                            <div class="si-node flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] bg-blue-950/60 border border-blue-800/30 text-blue-200/80" title="candela (cd) — Light">
+                                <span class="font-bold text-yellow-400">cd</span><span class="hidden lg:inline text-yellow-400/50">light</span>
                             </div>
                         </div>
 
+                        <!-- Right side: Tagline -->
+                        <p class="hidden md:block text-[9px] text-blue-400/50 font-medium tracking-wide flex-shrink-0">
+                            Supporting accurate measurement for industry, trade, calibration &amp; innovation
+                        </p>
                     </div>
-                    
                 </div>
+
             </header>
 
             <!-- Dashboard Content Container (Scrollable) -->
